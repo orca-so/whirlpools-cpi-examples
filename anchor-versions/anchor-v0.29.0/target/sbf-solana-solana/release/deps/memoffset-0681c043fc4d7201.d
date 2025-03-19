@@ -1,0 +1,10 @@
+/Users/calintje/Repos/orca-cpi-examples/anchor-versions/anchor-v0.29.0/target/sbf-solana-solana/release/deps/libmemoffset-0681c043fc4d7201.rmeta: /Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/lib.rs /Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/raw_field.rs /Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/offset_of.rs /Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/span_of.rs
+
+/Users/calintje/Repos/orca-cpi-examples/anchor-versions/anchor-v0.29.0/target/sbf-solana-solana/release/deps/libmemoffset-0681c043fc4d7201.rlib: /Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/lib.rs /Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/raw_field.rs /Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/offset_of.rs /Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/span_of.rs
+
+/Users/calintje/Repos/orca-cpi-examples/anchor-versions/anchor-v0.29.0/target/sbf-solana-solana/release/deps/memoffset-0681c043fc4d7201.d: /Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/lib.rs /Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/raw_field.rs /Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/offset_of.rs /Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/span_of.rs
+
+/Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/lib.rs:
+/Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/raw_field.rs:
+/Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/offset_of.rs:
+/Users/calintje/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memoffset-0.9.1/src/span_of.rs:

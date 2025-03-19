@@ -1,0 +1,11 @@
+{
+  "name": "orca_whirlpools_core_js_bindings",
+  "version": "0.1.0",
+  "files": [
+    "orca_whirlpools_core_js_bindings_bg.wasm",
+    "orca_whirlpools_core_js_bindings.js",
+    "orca_whirlpools_core_js_bindings.d.ts"
+  ],
+  "main": "orca_whirlpools_core_js_bindings.js",
+  "types": "orca_whirlpools_core_js_bindings.d.ts"
+}

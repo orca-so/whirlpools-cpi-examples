@@ -1,0 +1,4 @@
+Error: Function _ZN4core5slice4sort25insertion_sort_shift_left17h5858573016a43de8E Stack offset of 10608 exceeded max offset of 4096 by 6512 bytes, please minimize large stack variables
+Error: Function _ZN20orca_whirlpools_core4math10tick_array26TickArraySequence$LT$_$GT$3new17h43a072e9d5526439E Stack offset of 63504 exceeded max offset of 4096 by 59408 bytes, please minimize large stack variables
+Error: Function _ZN20orca_whirlpools_core5quote4swap25swap_quote_by_input_token17h37f40376fd332bd7E Stack offset of 190424 exceeded max offset of 4096 by 186328 bytes, please minimize large stack variables
+Error: Function _ZN20orca_whirlpools_core5quote4swap26swap_quote_by_output_token17hde394454d38b70fdE Stack offset of 190448 exceeded max offset of 4096 by 186352 bytes, please minimize large stack variables
