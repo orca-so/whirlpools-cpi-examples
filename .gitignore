@@ -1,0 +1,7 @@
+**/generated/
+**/target/
+**/node_modules/
+generated/
+target/
+node_modules/
+.DS_Store
