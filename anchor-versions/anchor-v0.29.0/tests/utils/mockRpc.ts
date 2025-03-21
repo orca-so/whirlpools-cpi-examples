@@ -4,7 +4,6 @@ import {
   assertIsAddress,
   createSolanaRpcFromTransport,
   createTransactionMessage,
-  generateKeyPair,
   generateKeyPairSigner,
   getAddressDecoder,
   getAddressEncoder,

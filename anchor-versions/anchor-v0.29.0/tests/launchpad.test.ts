@@ -1,8 +1,5 @@
 import { beforeAll, describe, it } from "vitest";
-import {
-  createGraduateTokenToOrcaInstruction,
-  createTestCpiInstruction,
-} from "../client/graduate_token_to_orca";
+import { createGraduateTokenToOrcaInstruction } from "../client/graduate_token_to_orca";
 import { rpc, sendTransaction, signer } from "./utils/mockRpc";
 import { WHIRLPOOL_CPI_PROGRAM_ADDRESS } from "../codama/generated";
 import { Address, getProgramDerivedAddress } from "@solana/kit";
@@ -49,7 +46,6 @@ describe("Launchpad CPI", () => {
         rpc,
         WHIRLPOOLS_CONFIG_ADDRESS,
         signer,
-        positionOwner,
         tokenMaxA,
         tokenMaxB,
         mintA,

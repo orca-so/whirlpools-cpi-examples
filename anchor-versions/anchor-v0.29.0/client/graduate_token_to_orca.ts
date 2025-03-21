@@ -38,13 +38,13 @@ import {
 import {
   getGraduateTokenToOrcaInstruction,
   GraduateTokenToOrcaInstruction,
+  WHIRLPOOL_CPI_PROGRAM_ADDRESS,
 } from "../codama/generated";
 
 export async function createGraduateTokenToOrcaInstruction(
   rpc: Rpc<SolanaRpcApi>,
   whirlpools_config_address: Address,
   funder: KeyPairSigner,
-  positionOwner: Address,
   tokenMaxA: bigint,
   tokenMaxB: bigint,
   tokenMintAddressA: Address,
@@ -124,6 +124,12 @@ export async function createGraduateTokenToOrcaInstruction(
 
   const positionMint = await generateKeyPairSigner();
   const positionAddress = (await getPositionAddress(positionMint.address))[0];
+  const positionOwner = (
+    await getProgramDerivedAddress({
+      programAddress: WHIRLPOOL_CPI_PROGRAM_ADDRESS,
+      seeds: ["position_owner"],
+    })
+  )[0];
   const positionTokenAccount = (
     await findAssociatedTokenPda({
       owner: positionOwner,

@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -11,8 +9,8 @@ use orca_whirlpools_client::{
     IncreaseLiquidityV2Cpi, IncreaseLiquidityV2CpiAccounts, IncreaseLiquidityV2InstructionArgs,
     InitializePoolV2Cpi, InitializePoolV2CpiAccounts, InitializePoolV2InstructionArgs,
     InitializeTickArrayCpi, InitializeTickArrayCpiAccounts, InitializeTickArrayInstructionArgs,
-    LockPositionInstructionArgs, OpenPositionWithTokenExtensionsCpi,
-    OpenPositionWithTokenExtensionsCpiAccounts, OpenPositionWithTokenExtensionsInstructionArgs,
+    OpenPositionWithTokenExtensionsCpi, OpenPositionWithTokenExtensionsCpiAccounts,
+    OpenPositionWithTokenExtensionsInstructionArgs,
 };
 use solana_program::pubkey::Pubkey;
 
