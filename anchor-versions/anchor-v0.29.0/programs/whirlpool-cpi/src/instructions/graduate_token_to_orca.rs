@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -12,6 +14,7 @@ use orca_whirlpools_client::{
     LockPositionInstructionArgs, OpenPositionWithTokenExtensionsCpi,
     OpenPositionWithTokenExtensionsCpiAccounts, OpenPositionWithTokenExtensionsInstructionArgs,
 };
+use solana_program::pubkey::Pubkey;
 
 #[derive(Accounts)]
 pub struct GraduateTokenToOrca<'info> {
@@ -44,7 +47,11 @@ pub struct GraduateTokenToOrca<'info> {
     /// CHECK: Account is checked by the Whirlpool program
     #[account(mut)]
     pub tick_array_upper: UncheckedAccount<'info>,
-    /// CHECK: Account is checked by the Whirlpool program
+    /// CHECK: This is a PDA used as a signer, not an account with data
+    #[account(
+        seeds = [b"position_owner".as_ref()],
+        bump,
+    )]
     pub position_owner: UncheckedAccount<'info>,
     /// CHECK: Account is checked by the Whirlpool program
     #[account(mut)]
@@ -55,8 +62,10 @@ pub struct GraduateTokenToOrca<'info> {
     #[account(mut)]
     pub position_token_account: UncheckedAccount<'info>,
     /// CHECK: Account is checked by the Whirlpool program
+    #[account(mut)]
     pub token_owner_account_a: UncheckedAccount<'info>,
     /// CHECK: Account is checked by the Whirlpool program
+    #[account(mut)]
     pub token_owner_account_b: UncheckedAccount<'info>,
     pub token_program_a: Program<'info, Token>,
     pub token_program_b: Program<'info, Token>,
@@ -188,7 +197,6 @@ pub fn handler(
     // let lock_position_instruction_args: LockPositionInstructionArgs =
     //     LockPositionInstructionArgs {
     //         lock_config: 0,
-
     //     };
 
     let initialize_pool_v2_cpi: InitializePoolV2Cpi = InitializePoolV2Cpi::new(
@@ -227,7 +235,8 @@ pub fn handler(
     let _ = initialize_tick_array_lower_cpi.invoke();
     let _ = initialize_tick_array_upper_cpi.invoke();
     let _ = open_position_with_token_extensions_cpi.invoke();
-    let _ = increase_liquidity_cpi.invoke();
+    let _ = increase_liquidity_cpi
+        .invoke_signed(&[&[b"position_owner".as_ref(), &[ctx.bumps.position_owner]]]);
 
     Ok(())
 }

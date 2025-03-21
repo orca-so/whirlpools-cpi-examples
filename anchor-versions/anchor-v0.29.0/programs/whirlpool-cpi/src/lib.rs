@@ -9,11 +9,6 @@ use instructions::*;
 pub mod whirlpool_cpi {
     use super::*;
 
-    pub fn test_cpi(ctx: Context<TestCpi>) -> Result<()> {
-        msg!("test_cpi");
-        Ok(())
-    }
-
     pub fn graduate_token_to_orca(
         ctx: Context<GraduateTokenToOrca>,
         tick_spacing: u16,
