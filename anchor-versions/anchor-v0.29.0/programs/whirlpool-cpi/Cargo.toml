@@ -16,6 +16,7 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
+bytemuck_derive = { version = "=1.8.1" }
 solana-program = { version = "=1.18.26" }                 # solana-cli version must be the same: sh -c "$(curl -sSfL https://release.anza.xyz/v1.18.26/install)"
 anchor-lang = { version = "=0.29.0" }
 anchor-spl = { version = "=0.29.0", features = ["memo"] }

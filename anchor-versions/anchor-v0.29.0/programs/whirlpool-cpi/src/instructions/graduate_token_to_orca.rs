@@ -9,6 +9,7 @@ use orca_whirlpools_client::{
     IncreaseLiquidityV2Cpi, IncreaseLiquidityV2CpiAccounts, IncreaseLiquidityV2InstructionArgs,
     InitializePoolV2Cpi, InitializePoolV2CpiAccounts, InitializePoolV2InstructionArgs,
     InitializeTickArrayCpi, InitializeTickArrayCpiAccounts, InitializeTickArrayInstructionArgs,
+    LockPositionCpi, LockPositionCpiAccounts, LockPositionInstructionArgs, LockType,
     OpenPositionWithTokenExtensionsCpi, OpenPositionWithTokenExtensionsCpiAccounts,
     OpenPositionWithTokenExtensionsInstructionArgs,
 };
@@ -68,6 +69,7 @@ pub struct GraduateTokenToOrca<'info> {
     pub token_program_a: Program<'info, Token>,
     pub token_program_b: Program<'info, Token>,
     /// CHECK: Account is checked by the Whirlpool program
+    #[account(mut)]
     pub lock_config: UncheckedAccount<'info>,
     pub token_2022_program: Program<'info, Token2022>,
     /// CHECK: Account is checked by the Whirlpool program
@@ -154,17 +156,17 @@ pub fn handler(
             tick_array_lower: &ctx.accounts.tick_array_lower.to_account_info(),
             tick_array_upper: &ctx.accounts.tick_array_upper.to_account_info(),
         };
-    // let lock_positition_cpi_accounts: LockPositionCpiAccounts = LockPositionCpiAccounts {
-    //     funder: &ctx.accounts.funder.to_account_info(),
-    //     position_authority: &ctx.accounts.position_owner.to_account_info(),
-    //     position: &ctx.accounts.position.to_account_info(),
-    //     position_mint: &ctx.accounts.position_mint.to_account_info(),
-    //     position_token_account: &ctx.accounts.position_token_account.to_account_info(),
-    //     lock_config: &ctx.accounts.lock_config.to_account_info(),
-    //     whirlpool: &ctx.accounts.whirlpool.to_account_info(),
-    //     token2022_program: &ctx.accounts.token_2022_program.to_account_info(),
-    //     system_program: &ctx.accounts.system_program.to_account_info(),
-    // };
+    let lock_position_cpi_accounts: LockPositionCpiAccounts = LockPositionCpiAccounts {
+        funder: &ctx.accounts.funder.to_account_info(),
+        position_authority: &ctx.accounts.position_owner.to_account_info(),
+        position: &ctx.accounts.position.to_account_info(),
+        position_mint: &ctx.accounts.position_mint.to_account_info(),
+        position_token_account: &ctx.accounts.position_token_account.to_account_info(),
+        lock_config: &ctx.accounts.lock_config.to_account_info(),
+        whirlpool: &ctx.accounts.whirlpool.to_account_info(),
+        token2022_program: &ctx.accounts.token_2022_program.to_account_info(),
+        system_program: &ctx.accounts.system_program.to_account_info(),
+    };
 
     let initialize_pool_v2_instruction_args: InitializePoolV2InstructionArgs =
         InitializePoolV2InstructionArgs {
@@ -192,10 +194,9 @@ pub fn handler(
             token_max_b,
             remaining_accounts_info: None, // Transfer hook is not supported
         };
-    // let lock_position_instruction_args: LockPositionInstructionArgs =
-    //     LockPositionInstructionArgs {
-    //         lock_config: 0,
-    //     };
+    let lock_position_instruction_args: LockPositionInstructionArgs = LockPositionInstructionArgs {
+        lock_type: LockType::Permanent,
+    };
 
     let initialize_pool_v2_cpi: InitializePoolV2Cpi = InitializePoolV2Cpi::new(
         &whirlpool_program,
@@ -223,17 +224,19 @@ pub fn handler(
         increase_liquidity_cpi_accounts,
         increase_liquidity_instruction_args,
     );
-    // let lock_position_cpi: LockPositionCpi = LockPositionCpi::new(
-    //     &ctx.accounts.whirlpool_program.to_account_info(),
-    //     lock_position_cpi_accounts,
-    //     lock_position_instruction_args,
-    // );
+    let lock_position_cpi: LockPositionCpi = LockPositionCpi::new(
+        &whirlpool_program,
+        lock_position_cpi_accounts,
+        lock_position_instruction_args,
+    );
 
     let _ = initialize_pool_v2_cpi.invoke();
     let _ = initialize_tick_array_lower_cpi.invoke();
     let _ = initialize_tick_array_upper_cpi.invoke();
     let _ = open_position_with_token_extensions_cpi.invoke();
     let _ = increase_liquidity_cpi
+        .invoke_signed(&[&[b"position_owner".as_ref(), &[ctx.bumps.position_owner]]]);
+    let _ = lock_position_cpi
         .invoke_signed(&[&[b"position_owner".as_ref(), &[ctx.bumps.position_owner]]]);
 
     Ok(())

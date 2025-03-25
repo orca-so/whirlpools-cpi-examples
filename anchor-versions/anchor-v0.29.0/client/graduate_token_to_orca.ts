@@ -161,7 +161,7 @@ export async function createGraduateTokenToOrcaInstruction(
   const lockConfig = (
     await getProgramDerivedAddress({
       programAddress: WHIRLPOOL_PROGRAM_ADDRESS,
-      seeds: ["position", getAddressEncoder().encode(positionMint.address)],
+      seeds: ["lock_config", getAddressEncoder().encode(positionAddress)],
     })
   )[0];
 
