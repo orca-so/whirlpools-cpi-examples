@@ -8,7 +8,7 @@ import {
   type Address,
   type IInstruction,
 } from "@solana/kit";
-import { SPLASH_POOL_TICK_SPACING } from "../../client/utils/constants";
+import { SPLASH_POOL_TICK_SPACING } from "../../src/utils/constants";
 import { sendTransaction, signer } from "./mockRpc";
 
 export async function setupConfigAndFeeTiers(): Promise<Address> {

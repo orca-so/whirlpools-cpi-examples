@@ -1,5 +1,5 @@
 import { beforeAll, describe, it } from "vitest";
-import { createGraduateTokenToOrcaInstruction } from "../client/graduate_token_to_orca";
+import { createGraduateTokenToOrcaInstruction } from "../src/graduate_token_to_orca";
 import { rpc, sendTransaction, signer } from "./utils/mockRpc";
 import { WHIRLPOOL_CPI_PROGRAM_ADDRESS } from "../codama/generated";
 import {
