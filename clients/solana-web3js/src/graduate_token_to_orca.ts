@@ -1,31 +1,41 @@
-import { Token } from "./../../solana-kit/node_modules/@solana-program/token-2022/dist/types/generated/accounts/token.d";
-import { initializeAccount2InstructionData } from "./../node_modules/@solana/spl-token/src/instructions/initializeAccount2";
-import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
-import { BN } from "@coral-xyz/anchor";
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  SYSVAR_RENT_PUBKEY,
+  Transaction,
+  SystemProgram,
+} from "@solana/web3.js";
+import { BN, Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import {
   buildDefaultAccountFetcher,
-  increaseLiquidityQuoteByInputToken,
   increaseLiquidityQuoteByInputTokenWithParams,
-  IncreaseLiquidityQuoteParam,
   PDAUtil,
   PoolUtil,
   PriceMath,
   SPLASH_POOL_TICK_SPACING,
-  TickArrayUtil,
   TickUtil,
-  TokenExtensionContextForPool,
-  TokenExtensionUtil,
-  WhirlpoolAccountFetcherInterface,
   ORCA_WHIRLPOOL_PROGRAM_ID,
-  METADATA_PROGRAM_ADDRESS,
+  MEMO_PROGRAM_ADDRESS,
 } from "@orca-so/whirlpools-sdk";
 import { AddressUtil, Percentage } from "@orca-so/common-sdk";
 import assert from "assert";
 import Decimal from "decimal.js";
 import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
+import { METADATA_UPDATE_AUTH } from "./utils/constants";
+import { readFileSync } from "fs";
+
+// Define a constant for the program ID
+const WHIRLPOOL_CPI_PROGRAM_ID = new PublicKey(
+  "23WKGEsTRVZiVuwg8eyXByPq2xkzTR8v6TW4V1WiT89g"
+);
+const idl = JSON.parse(
+  readFileSync("../../anchor-program/target/idl/whirlpool_cpi.json", "utf8")
+);
 
 export async function createGraduateTokenToOrcaTransaction(
   connection: Connection,
@@ -86,7 +96,7 @@ export async function createGraduateTokenToOrcaTransaction(
 
   const withTokenMetadataExtension = true;
   const liquidityAmountQuote = increaseLiquidityQuoteByInputTokenWithParams({
-    inputTokenAmount: new Decimal(tokenMaxA.toString()),
+    inputTokenAmount: tokenMaxA,
     inputTokenMint: mintInfoA.address,
     tokenMintA: mintInfoA.address,
     tokenMintB: mintInfoB.address,
@@ -174,8 +184,67 @@ export async function createGraduateTokenToOrcaTransaction(
     positionAddress
   ).publicKey;
 
+  // Create a mock provider for Anchor
+  const provider = new AnchorProvider(connection, new Wallet(funder), {
+    commitment: "confirmed",
+  });
+
+  const program = new Program(idl, WHIRLPOOL_CPI_PROGRAM_ID, provider);
+
+  // Create a new transaction
+  const tx = new Transaction();
+
+  // Add the graduateTokenToOrca instruction to the transaction
+  const instruction = await program.methods
+    .graduateTokenToOrca(
+      tickSpacing,
+      new BN(initialSqrtPrice.toString()),
+      startTickIndexLower,
+      startTickIndexUpper,
+      tickLowerIndex,
+      tickUpperIndex,
+      withTokenMetadataExtension,
+      new BN(liquidityAmountQuote.liquidityAmount.toString()),
+      new BN(tokenMaxA.toString()),
+      new BN(tokenMaxB.toString())
+    )
+    .accounts({
+      whirlpoolProgram: ORCA_WHIRLPOOL_PROGRAM_ID,
+      whirlpoolsConfig: whirlpoolsConfigAddress,
+      whirlpool: whirlpoolAddress,
+      tokenMintA: mintInfoA.address,
+      tokenMintB: mintInfoB.address,
+      tokenBadgeA: tokenBadgeA,
+      tokenBadgeB: tokenBadgeB,
+      funder: funder.publicKey,
+      tokenVaultA: tokenVaultA.publicKey,
+      tokenVaultB: tokenVaultB.publicKey,
+      feeTier: feeTie,
+      tickArrayLower: tickArrayAddressLower,
+      tickArrayUpper: tickArrayAddressUpper,
+      positionOwner: positionOwner,
+      position: positionAddress,
+      positionMint: positionMint.publicKey,
+      positionTokenAccount: positionTokenAccount,
+      tokenOwnerAccountA: tokenOwnerAccountA,
+      tokenOwnerAccountB: tokenOwnerAccountB,
+      tokenProgramA: tokenProgramA,
+      tokenProgramB: tokenProgramB,
+      lockConfig: lockConfig,
+      token2022Program: TOKEN_2022_PROGRAM_ID,
+      metadataUpdateAuth: METADATA_UPDATE_AUTH,
+      systemProgram: SystemProgram.programId,
+      rent: SYSVAR_RENT_PUBKEY,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      memoProgram: MEMO_PROGRAM_ADDRESS,
+    })
+    .signers([funder, tokenVaultA, tokenVaultB, positionMint])
+    .instruction();
+
+  tx.add(instruction);
+
   return {
-    tx: new Transaction(),
+    tx,
     whirlpoolAddress,
     positionMintAddress: positionMint.publicKey,
   };
