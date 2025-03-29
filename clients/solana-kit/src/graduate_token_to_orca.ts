@@ -43,7 +43,7 @@ import {
 
 export async function createGraduateTokenToOrcaInstruction(
   rpc: Rpc<SolanaRpcApi>,
-  whirlpools_config_address: Address,
+  whirlpoolsConfigAddress: Address,
   funder: KeyPairSigner,
   tokenMaxA: bigint,
   tokenMaxB: bigint,
@@ -99,16 +99,16 @@ export async function createGraduateTokenToOrcaInstruction(
     tokenVaultB,
   ] = await Promise.all([
     getWhirlpoolAddress(
-      whirlpools_config_address,
+      whirlpoolsConfigAddress,
       tokenMintA.address,
       tokenMintB.address,
       tickSpacing
     ).then((x) => x[0]),
-    getFeeTierAddress(whirlpools_config_address, tickSpacing).then((x) => x[0]),
-    getTokenBadgeAddress(whirlpools_config_address, tokenMintA.address).then(
+    getFeeTierAddress(whirlpoolsConfigAddress, tickSpacing).then((x) => x[0]),
+    getTokenBadgeAddress(whirlpoolsConfigAddress, tokenMintA.address).then(
       (x) => x[0]
     ),
-    getTokenBadgeAddress(whirlpools_config_address, tokenMintB.address).then(
+    getTokenBadgeAddress(whirlpoolsConfigAddress, tokenMintB.address).then(
       (x) => x[0]
     ),
     generateKeyPairSigner(),
@@ -156,8 +156,6 @@ export async function createGraduateTokenToOrcaInstruction(
     })
   )[0];
 
-  const metadataUpdateAuth = METADATA_UPDATE_AUTH;
-
   const lockConfig = (
     await getProgramDerivedAddress({
       programAddress: WHIRLPOOL_PROGRAM_ADDRESS,
@@ -167,7 +165,7 @@ export async function createGraduateTokenToOrcaInstruction(
 
   const ix = getGraduateTokenToOrcaInstruction({
     whirlpoolProgram: WHIRLPOOL_PROGRAM_ADDRESS,
-    whirlpoolsConfig: whirlpools_config_address,
+    whirlpoolsConfig: whirlpoolsConfigAddress,
     whirlpool: whirlpoolAddress,
     tokenMintA: orderedTokenMintAddressA,
     tokenMintB: orderedTokenMintAddressB,
@@ -189,7 +187,7 @@ export async function createGraduateTokenToOrcaInstruction(
     tokenProgramB,
     lockConfig,
     token2022Program: TOKEN_2022_PROGRAM_ADDRESS,
-    metadataUpdateAuth,
+    metadataUpdateAuth: METADATA_UPDATE_AUTH,
     systemProgram: SYSTEM_PROGRAM_ADDRESS,
     rent: SYSVAR_RENT_ADDRESS,
     associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,

@@ -1,4 +1,5 @@
 {
+    "type": "module",
     "scripts": {
         "build": "cp ../../anchor-program/target/deploy/whirlpool_cpi.so tests/fixtures/ && npx tsx codama/codama.js",
         "test": "vitest run tests",
