@@ -1,7 +1,6 @@
 {
     "type": "module",
     "scripts": {
-        "build": "cp ../../anchor-program/target/deploy/whirlpool_cpi.so tests/fixtures/ && npx tsx codama/codama.js",
         "test": "vitest run tests",
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
@@ -15,6 +14,7 @@
         "@orca-so/whirlpools-core": "^1.0.3",
         "@solana-program/memo": "^0.7.0",
         "@solana-program/system": "^0.7.0",
+        "@solana-program/token": "^0.5.1",
         "@solana-program/token-2022": "^0.4.0",
         "@solana/kit": "^2.1.0",
         "@solana/sysvars": "^2.1.0",

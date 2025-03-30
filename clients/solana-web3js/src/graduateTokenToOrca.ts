@@ -5,10 +5,11 @@ import {
   SYSVAR_RENT_PUBKEY,
   Transaction,
   SystemProgram,
+  TransactionMessage,
+  VersionedTransaction,
 } from "@solana/web3.js";
-import { BN, Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
+import { AnchorProvider, BN, Program, Wallet } from "@coral-xyz/anchor";
 import {
-  buildDefaultAccountFetcher,
   increaseLiquidityQuoteByInputTokenWithParams,
   PDAUtil,
   PoolUtil,
@@ -17,9 +18,9 @@ import {
   TickUtil,
   ORCA_WHIRLPOOL_PROGRAM_ID,
   MEMO_PROGRAM_ADDRESS,
+  WhirlpoolContext,
 } from "@orca-so/whirlpools-sdk";
 import { AddressUtil, Percentage } from "@orca-so/common-sdk";
-import assert from "assert";
 import Decimal from "decimal.js";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -46,40 +47,40 @@ export async function createGraduateTokenToOrcaTransaction(
   tokenMintAddressA: PublicKey,
   tokenMintAddressB: PublicKey
 ): Promise<{
-  tx: Transaction;
+  tx: VersionedTransaction;
   whirlpoolAddress: PublicKey;
   positionMintAddress: PublicKey;
 }> {
-  const fetcher = buildDefaultAccountFetcher(connection);
+  const provider = new AnchorProvider(connection, new Wallet(funder), {
+    commitment: "confirmed",
+  });
+  const ctx = WhirlpoolContext.from(
+    connection,
+    new Wallet(funder),
+    ORCA_WHIRLPOOL_PROGRAM_ID
+  );
 
   const [orderedTokenMintAddressA, orderedTokenMintAddressB] =
     PoolUtil.orderMints(tokenMintAddressA, tokenMintAddressB);
 
-  const [mintA, mintB] = await fetcher.getMintInfos([
-    orderedTokenMintAddressA,
-    orderedTokenMintAddressB,
-  ]);
-
-  assert.ok(mintA[1], `${mintA[0]} is not a valid mint`);
-  assert.ok(mintB[1], `${mintB[0]} is not a valid mint`);
-  const mintInfoA = mintA[1];
-  const mintInfoB = mintB[1];
+  const mintA = await ctx.fetcher.getMintInfo(orderedTokenMintAddressA);
+  const mintB = await ctx.fetcher.getMintInfo(orderedTokenMintAddressB);
 
   const initialPrice = new Decimal(
     tokenMaxB
-      .mul(new BN(10).pow(new BN(mintInfoA.decimals)))
-      .div(tokenMaxA.mul(new BN(10).pow(new BN(mintInfoB.decimals))))
+      .mul(new BN(10).pow(new BN(mintA.decimals)))
+      .div(tokenMaxA.mul(new BN(10).pow(new BN(mintB.decimals))))
       .toString()
   );
   const initialSqrtPrice = PriceMath.priceToSqrtPriceX64(
     initialPrice,
-    mintInfoA.decimals,
-    mintInfoB.decimals
+    mintA.decimals,
+    mintB.decimals
   );
   const initialTickIndex = PriceMath.priceToTickIndex(
     initialPrice,
-    mintInfoA.decimals,
-    mintInfoB.decimals
+    mintA.decimals,
+    mintB.decimals
   );
 
   const tickSpacing = SPLASH_POOL_TICK_SPACING;
@@ -97,29 +98,29 @@ export async function createGraduateTokenToOrcaTransaction(
   const withTokenMetadataExtension = true;
   const liquidityAmountQuote = increaseLiquidityQuoteByInputTokenWithParams({
     inputTokenAmount: tokenMaxA,
-    inputTokenMint: mintInfoA.address,
-    tokenMintA: mintInfoA.address,
-    tokenMintB: mintInfoB.address,
+    inputTokenMint: mintA.address,
+    tokenMintA: mintA.address,
+    tokenMintB: mintB.address,
     tickCurrentIndex: initialTickIndex,
     sqrtPrice: initialSqrtPrice,
     tickLowerIndex,
     tickUpperIndex,
     tokenExtensionCtx: {
-      currentEpoch: await fetcher.getEpoch(),
-      tokenMintWithProgramA: mintInfoA,
-      tokenMintWithProgramB: mintInfoB,
+      currentEpoch: await ctx.fetcher.getEpoch(),
+      tokenMintWithProgramA: mintA,
+      tokenMintWithProgramB: mintB,
     },
     slippageTolerance: new Percentage(new BN(0), new BN(100)),
   });
 
   const whirlpoolAddress = PDAUtil.getWhirlpool(
     ORCA_WHIRLPOOL_PROGRAM_ID,
-    whirlpoolsConfigAddress, // this should be set by the testing framework
-    mintInfoA.address,
-    mintInfoB.address,
+    whirlpoolsConfigAddress,
+    mintA.address,
+    mintB.address,
     tickSpacing
   ).publicKey;
-  const feeTie = PDAUtil.getFeeTier(
+  const feeTier = PDAUtil.getFeeTier(
     ORCA_WHIRLPOOL_PROGRAM_ID,
     whirlpoolsConfigAddress,
     tickSpacing
@@ -127,12 +128,12 @@ export async function createGraduateTokenToOrcaTransaction(
   const tokenBadgeA = PDAUtil.getTokenBadge(
     ORCA_WHIRLPOOL_PROGRAM_ID,
     whirlpoolsConfigAddress,
-    mintInfoA.address
+    mintA.address
   ).publicKey;
   const tokenBadgeB = PDAUtil.getTokenBadge(
     ORCA_WHIRLPOOL_PROGRAM_ID,
     whirlpoolsConfigAddress,
-    mintInfoB.address
+    mintB.address
   ).publicKey;
   const tokenVaultA = Keypair.generate();
   const tokenVaultB = Keypair.generate();
@@ -155,7 +156,7 @@ export async function createGraduateTokenToOrcaTransaction(
   ).publicKey;
   const positionOwner = AddressUtil.findProgramAddress(
     [Buffer.from("position_owner")],
-    ORCA_WHIRLPOOL_PROGRAM_ID
+    WHIRLPOOL_CPI_PROGRAM_ID
   ).publicKey;
   const positionTokenAccount = await getAssociatedTokenAddress(
     positionMint.publicKey,
@@ -164,17 +165,17 @@ export async function createGraduateTokenToOrcaTransaction(
     TOKEN_2022_PROGRAM_ID
   );
 
-  const tokenProgramA = mintInfoA.tokenProgram;
-  const tokenProgramB = mintInfoB.tokenProgram;
+  const tokenProgramA = mintA.tokenProgram;
+  const tokenProgramB = mintB.tokenProgram;
   const tokenOwnerAccountA = await getAssociatedTokenAddress(
     positionOwner,
-    mintInfoA.address,
+    mintA.address,
     true,
     tokenProgramA
   );
   const tokenOwnerAccountB = await getAssociatedTokenAddress(
     positionOwner,
-    mintInfoB.address,
+    mintB.address,
     true,
     tokenProgramB
   );
@@ -184,42 +185,34 @@ export async function createGraduateTokenToOrcaTransaction(
     positionAddress
   ).publicKey;
 
-  // Create a mock provider for Anchor
-  const provider = new AnchorProvider(connection, new Wallet(funder), {
-    commitment: "confirmed",
-  });
-
   const program = new Program(idl, WHIRLPOOL_CPI_PROGRAM_ID, provider);
 
-  // Create a new transaction
-  const tx = new Transaction();
-
   // Add the graduateTokenToOrca instruction to the transaction
-  const instruction = await program.methods
+  const ix = await program.methods
     .graduateTokenToOrca(
       tickSpacing,
-      new BN(initialSqrtPrice.toString()),
+      initialSqrtPrice,
       startTickIndexLower,
       startTickIndexUpper,
       tickLowerIndex,
       tickUpperIndex,
       withTokenMetadataExtension,
-      new BN(liquidityAmountQuote.liquidityAmount.toString()),
-      new BN(tokenMaxA.toString()),
-      new BN(tokenMaxB.toString())
+      liquidityAmountQuote.liquidityAmount,
+      tokenMaxA,
+      tokenMaxB
     )
     .accounts({
       whirlpoolProgram: ORCA_WHIRLPOOL_PROGRAM_ID,
       whirlpoolsConfig: whirlpoolsConfigAddress,
       whirlpool: whirlpoolAddress,
-      tokenMintA: mintInfoA.address,
-      tokenMintB: mintInfoB.address,
+      tokenMintA: mintA.address,
+      tokenMintB: mintB.address,
       tokenBadgeA: tokenBadgeA,
       tokenBadgeB: tokenBadgeB,
       funder: funder.publicKey,
       tokenVaultA: tokenVaultA.publicKey,
       tokenVaultB: tokenVaultB.publicKey,
-      feeTier: feeTie,
+      feeTier: feeTier,
       tickArrayLower: tickArrayAddressLower,
       tickArrayUpper: tickArrayAddressUpper,
       positionOwner: positionOwner,
@@ -238,10 +231,15 @@ export async function createGraduateTokenToOrcaTransaction(
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       memoProgram: MEMO_PROGRAM_ADDRESS,
     })
-    .signers([funder, tokenVaultA, tokenVaultB, positionMint])
     .instruction();
 
-  tx.add(instruction);
+  const messageV0 = new TransactionMessage({
+    payerKey: funder.publicKey,
+    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
+    instructions: [ix],
+  }).compileToV0Message();
+  const tx = new VersionedTransaction(messageV0);
+  tx.sign([funder, tokenVaultA, tokenVaultB, positionMint]);
 
   return {
     tx,
