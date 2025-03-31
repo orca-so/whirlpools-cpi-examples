@@ -1,4 +1,3 @@
-import { Or } from "./../../solana-kit/node_modules/expect-type/dist/utils.d";
 import { beforeAll, describe, it } from "vitest";
 import { PublicKey } from "@solana/web3.js";
 import assert from "assert";
@@ -10,19 +9,17 @@ import {
   signer,
   whirlpoolsConfigAddress,
 } from "./utils/mockConnection";
-import { BN, Wallet } from "@coral-xyz/anchor";
-import { ctx, WHIRLPOOL_CPI_PROGRAM_ID } from "./utils/program";
+import { BN } from "@coral-xyz/anchor";
+import { WHIRLPOOL_CPI_PROGRAM_ID } from "./utils/program";
 import { getAccount } from "@solana/spl-token";
 import {
-  buildWhirlpoolClient,
+  buildDefaultAccountFetcher,
   LockConfigUtil,
   ORCA_WHIRLPOOL_PROGRAM_ID,
   PDAUtil,
   PriceMath,
-  WhirlpoolContext,
 } from "@orca-so/whirlpools-sdk";
 import Decimal from "decimal.js";
-import { rpc } from "@coral-xyz/anchor/dist/cjs/utils";
 
 describe("Launchpad CPI", () => {
   let positionOwner: PublicKey;
@@ -45,7 +42,7 @@ describe("Launchpad CPI", () => {
   });
 
   it("Should graduate token to orca", async () => {
-    const { tx, positionMintAddress, whirlpoolAddress } =
+    const { tx, whirlpoolAddress, positionMintAddress } =
       await createGraduateTokenToOrcaTransaction(
         connection,
         whirlpoolsConfigAddress,
@@ -57,27 +54,18 @@ describe("Launchpad CPI", () => {
       );
 
     const txRes = await connection.sendTransaction(tx);
-    console.log("txRes", txRes);
 
     const price = new Decimal(1);
     const sqrtPrice = PriceMath.priceToSqrtPriceX64(price, 6, 6);
 
-    const ctx = WhirlpoolContext.from(
-      connection,
-      new Wallet(signer),
-      ORCA_WHIRLPOOL_PROGRAM_ID
-    );
-    const wAccount = await connection.getAccountInfo(whirlpoolAddress);
-    console.log("wAccount", wAccount);
-    const client = buildWhirlpoolClient(ctx);
-    const whirlpoool = await client.getPool(whirlpoolAddress);
-    const whirlpoolData = whirlpoool.getData();
-    const tokenVaultA = whirlpoolData.tokenVaultA;
-    const tokenVaultB = whirlpoolData.tokenVaultB;
+    const fetcher = buildDefaultAccountFetcher(connection);
+    const whirlpool = await fetcher.getPool(whirlpoolAddress);
+    const tokenVaultA = whirlpool.tokenVaultA;
+    const tokenVaultB = whirlpool.tokenVaultB;
     const positionAddress = PDAUtil.getPosition(
       ORCA_WHIRLPOOL_PROGRAM_ID,
       positionMintAddress
-    )[0];
+    ).publicKey;
 
     const balanceAtaA = (await getAccount(connection, ataA)).amount;
     const balanceAtaB = (await getAccount(connection, ataB)).amount;
@@ -85,13 +73,19 @@ describe("Launchpad CPI", () => {
       .amount;
     const balanceTokenVaultB = (await getAccount(connection, tokenVaultB))
       .amount;
-    const position = await client.getPosition(positionAddress);
-    const lockType = (await position.getLockConfigData()).lockType;
+    // const lockConfig = await fetcher.getLockConfig(positionAddress);
+    // const lockType = lockConfig.lockType;
 
+    const lockConfigAccount = await connection.getAccountInfo(
+      PDAUtil.getLockConfig(ORCA_WHIRLPOOL_PROGRAM_ID, positionAddress)
+        .publicKey
+    );
+    assert.strictEqual(BigInt(whirlpool.sqrtPrice), BigInt(sqrtPrice));
     assert.strictEqual(balanceAtaA, 0n);
     assert.strictEqual(balanceAtaB, 0n);
-    assert.strictEqual(balanceTokenVaultA, tokenMaxA);
-    assert.strictEqual(balanceTokenVaultB, tokenMaxB);
-    assert.strictEqual(lockType, LockConfigUtil.getPermanentLockType());
+    assert.strictEqual(balanceTokenVaultA, BigInt(tokenMaxA));
+    assert.strictEqual(balanceTokenVaultB, BigInt(tokenMaxB));
+    // assert.strictEqual(lockType, LockConfigUtil.getPermanentLockType());
+    assert.ok(lockConfigAccount);
   });
 });

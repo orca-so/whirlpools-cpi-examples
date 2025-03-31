@@ -31,6 +31,7 @@ import {
 } from "@solana/spl-token";
 import { METADATA_UPDATE_AUTH } from "./utils/constants";
 import { readFileSync } from "fs";
+import { version as anchorVersion } from "@coral-xyz/anchor/package.json";
 
 // Define a constant for the program ID
 const WHIRLPOOL_CPI_PROGRAM_ID = new PublicKey(
@@ -187,9 +188,9 @@ export async function createGraduateTokenToOrcaTransaction(
     positionAddress
   ).publicKey;
 
-  const program = new Program(idl, WHIRLPOOL_CPI_PROGRAM_ID, provider);
+  // Use the helper function to create the program instance since we need to handle different Anchor versions
+  const program = createProgram(idl, provider, WHIRLPOOL_CPI_PROGRAM_ID);
 
-  // Add the graduateTokenToOrca instruction to the transaction
   const ix = await program.methods
     .graduateTokenToOrca(
       tickSpacing,
@@ -251,4 +252,32 @@ export async function createGraduateTokenToOrcaTransaction(
     whirlpoolAddress,
     positionMintAddress: positionMint.publicKey,
   };
+}
+
+// Helper function to create a Program instance based on Anchor version
+function createProgram(
+  idl: any,
+  provider: AnchorProvider,
+  programId?: PublicKey
+): any {
+  // Use Function constructor to bypass TypeScript type checking
+  // This allows us to handle different Anchor versions at runtime
+  if (anchorVersion.startsWith("0.29")) {
+    // For Anchor v0.29.x, we need the program ID
+    return new Function(
+      "Program",
+      "idl",
+      "programId",
+      "provider",
+      "return new Program(idl, programId, provider);"
+    )(Program, idl, programId, provider);
+  } else {
+    // For Anchor v0.30.x and later, we don't need the program ID
+    return new Function(
+      "Program",
+      "idl",
+      "provider",
+      "return new Program(idl, provider);"
+    )(Program, idl, provider);
+  }
 }

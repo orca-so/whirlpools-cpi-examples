@@ -41,14 +41,21 @@ export class MockConnection extends Connection {
   async sendTransaction(
     transaction: Transaction | VersionedTransaction
   ): Promise<string> {
-    const txMetaData = this.liteSvm.sendTransaction(transaction as Transaction);
+    const txMetaData = this.liteSvm.sendTransaction(transaction);
     return txMetaData.toString();
   }
 
   async getAccountInfo(
     address: PublicKey | string
-  ): Promise<AccountInfo<Buffer>> {
-    return this.liteSvm.getAccount(address as PublicKey) as AccountInfo<Buffer>;
+  ): Promise<AccountInfo<Buffer> | null> {
+    const publicKey =
+      typeof address === "string" ? new PublicKey(address) : address;
+    const accountInfo = this.liteSvm.getAccount(publicKey);
+
+    return {
+      ...accountInfo,
+      data: Buffer.from(accountInfo.data),
+    };
   }
 
   async getEpochInfo(): Promise<EpochInfo> {
@@ -72,7 +79,4 @@ svm.addProgramFromFile(
 );
 export const signer = setupSigner(svm);
 export const connection = new MockConnection(svm);
-export const whirlpoolsConfigAddress = await setupConfigAndFeeTiers(
-  connection,
-  signer
-);
+export const whirlpoolsConfigAddress = await setupConfigAndFeeTiers();

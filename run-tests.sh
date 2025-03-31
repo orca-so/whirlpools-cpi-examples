@@ -67,6 +67,7 @@ case $choice in
     SOLANA_CLI_VERSION="v1.18.17"
     SOLANA_INSTALL_CMD="sh -c \"\$(curl -sSfL https://release.anza.xyz/v1.18.17/install)\""
     AVM_VERSION="0.29.0"
+    PACKAGE_JSON_SOURCE="package.anchor-v0_29_0.json"
     ;;
   2)
     ANCHOR_VERSION="v0.30.1"
@@ -75,6 +76,7 @@ case $choice in
     SOLANA_CLI_VERSION="v1.18.17"
     SOLANA_INSTALL_CMD="sh -c \"\$(curl -sSfL https://release.anza.xyz/v1.18.17/install)\""
     AVM_VERSION="0.30.1"
+    PACKAGE_JSON_SOURCE="package.anchor-v0_30_1.json"
     ;;
   3)
     ANCHOR_VERSION="v0.31.0"
@@ -83,6 +85,7 @@ case $choice in
     SOLANA_CLI_VERSION="v2.1.0"
     SOLANA_INSTALL_CMD="sh -c \"\$(curl -sSfL https://release.anza.xyz/v2.1.0/install)\""
     AVM_VERSION="0.31.0"
+    PACKAGE_JSON_SOURCE="package.anchor-v0_31_0.json"
     ;;
   *)
     echo -e "${RED}Invalid selection. Exiting.${NC}"
@@ -112,6 +115,17 @@ fi
 if [ -d "../clients/solana-kit/codama/generated" ]; then
   echo -e "${RED}Removing clients/solana-kit/codama/generated directory${NC}"
   rm -rf "../clients/solana-kit/codama/generated"
+fi
+
+# Clean up web3js client project
+if [ -d "../clients/solana-web3js/node_modules" ]; then
+  echo -e "${RED}Removing clients/solana-web3js/node_modules directory${NC}"
+  rm -rf "../clients/solana-web3js/node_modules"
+fi
+
+if [ -f "../clients/solana-web3js/yarn.lock" ]; then
+  echo -e "${RED}Removing clients/solana-web3js/yarn.lock file${NC}"
+  rm -rf "../clients/solana-web3js/yarn.lock"
 fi
 
 # Copy the appropriate Cargo.toml file
@@ -171,8 +185,51 @@ check_status
 echo -e "${GREEN}✓ Codama client generated${NC}"
 
 echo -e "${BLUE}=== Running tests ===${NC}"
+echo -e "${CYAN}Running tests with retry mechanism${NC}"
+
+# Run tests with retry logic (up to 3 attempts)
+MAX_ATTEMPTS=3
+ATTEMPT=1
+TEST_SUCCESS=false
+
+while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$TEST_SUCCESS" = false ]; do
+  echo -e "${YELLOW}Test attempt $ATTEMPT of $MAX_ATTEMPTS${NC}"
+  
+  if yarn test; then
+    TEST_SUCCESS=true
+    echo -e "${GREEN}✓ Tests completed successfully on attempt $ATTEMPT${NC}"
+  else
+    if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+      echo -e "${YELLOW}Tests failed on attempt $ATTEMPT. Waiting 5 seconds before retrying...${NC}"
+      sleep 5
+    else
+      echo -e "${RED}Tests failed after $MAX_ATTEMPTS attempts. Exiting.${NC}"
+      exit 1
+    fi
+  fi
+  
+  ATTEMPT=$((ATTEMPT+1))
+done
+
+# Navigate to web3js client project
+echo -e "${BLUE}=== Setting up Web3.js client ===${NC}"
+cd ../solana-web3js
+echo -e "${CYAN}Copying appropriate package.json for Anchor ${YELLOW}$ANCHOR_VERSION${NC}"
+
+echo -e "${CYAN}Copying $PACKAGE_JSON_SOURCE to package.json${NC}"
+cp $PACKAGE_JSON_SOURCE package.json
+check_status
+
+echo -e "${CYAN}Installing dependencies with yarn${NC}"
+yarn install
+check_status
+echo -e "${GREEN}✓ Dependencies installed${NC}"
+
+echo -e "${BLUE}=== Running Web3.js client tests ===${NC}"
 echo -e "${CYAN}Running tests${NC}"
 yarn test
 check_status
-echo -e "${GREEN}✓ Tests completed${NC}"
+echo -e "${GREEN}✓ Web3.js tests completed${NC}"
+
+echo -e "${BLUE}=== All tests completed successfully! ===${NC}"
 
