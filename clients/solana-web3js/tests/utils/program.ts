@@ -7,17 +7,15 @@ import {
   WhirlpoolIx,
 } from "@orca-so/whirlpools-sdk";
 import { Wallet } from "@coral-xyz/anchor";
-import { MockConnection } from "./mockConnection";
+import { connection, MockConnection, signer } from "./mockConnection";
 
 export const WHIRLPOOL_CPI_PROGRAM_ID = new PublicKey(
   "23WKGEsTRVZiVuwg8eyXByPq2xkzTR8v6TW4V1WiT89g"
 );
 
-export async function setupConfigAndFeeTiers(
-  connection: MockConnection,
-  signer: Keypair
-): Promise<PublicKey> {
+export async function setupConfigAndFeeTiers(): Promise<PublicKey> {
   const whirlpoolsConfigKeypair = Keypair.generate();
+
   const ctx = WhirlpoolContext.from(
     connection,
     new Wallet(signer),
@@ -33,7 +31,9 @@ export async function setupConfigAndFeeTiers(
       collectProtocolFeesAuthority: signer.publicKey,
       rewardEmissionsSuperAuthority: signer.publicKey,
       defaultProtocolFeeRate: 100,
-    }).instructions[0],
+    }).instructions[0]
+  );
+  tx.add(
     WhirlpoolIx.initializeFeeTierIx(ctx.program, {
       defaultFeeRate: 100,
       feeAuthority: signer.publicKey,
@@ -43,7 +43,7 @@ export async function setupConfigAndFeeTiers(
         SPLASH_POOL_TICK_SPACING
       ),
       funder: signer.publicKey,
-      tickSpacing: 64,
+      tickSpacing: SPLASH_POOL_TICK_SPACING,
       whirlpoolsConfig: whirlpoolsConfigKeypair.publicKey,
     }).instructions[0]
   );

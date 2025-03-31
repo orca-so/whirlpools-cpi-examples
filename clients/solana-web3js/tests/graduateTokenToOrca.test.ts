@@ -1,15 +1,8 @@
+import { Or } from "./../../solana-kit/node_modules/expect-type/dist/utils.d";
 import { beforeAll, describe, it } from "vitest";
-import { LiteSVM, TransactionMetadata } from "litesvm";
-import {
-  Keypair,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-} from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import assert from "assert";
 import { setupAta, setupMint } from "./utils/token";
-import { ORCA_WHIRLPOOL_PROGRAM_ID } from "@orca-so/whirlpools-sdk";
 import { AddressUtil } from "@orca-so/common-sdk";
 import { createGraduateTokenToOrcaTransaction } from "../src/graduateTokenToOrca";
 import {
@@ -17,8 +10,19 @@ import {
   signer,
   whirlpoolsConfigAddress,
 } from "./utils/mockConnection";
-import { getMint } from "@solana/spl-token";
-import { BN } from "@coral-xyz/anchor";
+import { BN, Wallet } from "@coral-xyz/anchor";
+import { ctx, WHIRLPOOL_CPI_PROGRAM_ID } from "./utils/program";
+import { getAccount } from "@solana/spl-token";
+import {
+  buildWhirlpoolClient,
+  LockConfigUtil,
+  ORCA_WHIRLPOOL_PROGRAM_ID,
+  PDAUtil,
+  PriceMath,
+  WhirlpoolContext,
+} from "@orca-so/whirlpools-sdk";
+import Decimal from "decimal.js";
+import { rpc } from "@coral-xyz/anchor/dist/cjs/utils";
 
 describe("Launchpad CPI", () => {
   let positionOwner: PublicKey;
@@ -32,7 +36,7 @@ describe("Launchpad CPI", () => {
   beforeAll(async () => {
     positionOwner = AddressUtil.findProgramAddress(
       [Buffer.from("position_owner")],
-      ORCA_WHIRLPOOL_PROGRAM_ID
+      WHIRLPOOL_CPI_PROGRAM_ID
     ).publicKey;
     mintA = await setupMint({ decimals: 6 });
     mintB = await setupMint({ decimals: 6 });
@@ -41,13 +45,6 @@ describe("Launchpad CPI", () => {
   });
 
   it("Should graduate token to orca", async () => {
-    const ataAccountA = await getMint(connection, mintA);
-    console.log(whirlpoolsConfigAddress);
-    const configAccount = await connection.getAccountInfo(
-      whirlpoolsConfigAddress
-    );
-    console.log(configAccount);
-
     const { tx, positionMintAddress, whirlpoolAddress } =
       await createGraduateTokenToOrcaTransaction(
         connection,
@@ -60,37 +57,41 @@ describe("Launchpad CPI", () => {
       );
 
     const txRes = await connection.sendTransaction(tx);
-    console.log(txRes);
-    console.log(ataAccountA);
+    console.log("txRes", txRes);
+
+    const price = new Decimal(1);
+    const sqrtPrice = PriceMath.priceToSqrtPriceX64(price, 6, 6);
+
+    const ctx = WhirlpoolContext.from(
+      connection,
+      new Wallet(signer),
+      ORCA_WHIRLPOOL_PROGRAM_ID
+    );
+    const wAccount = await connection.getAccountInfo(whirlpoolAddress);
+    console.log("wAccount", wAccount);
+    const client = buildWhirlpoolClient(ctx);
+    const whirlpoool = await client.getPool(whirlpoolAddress);
+    const whirlpoolData = whirlpoool.getData();
+    const tokenVaultA = whirlpoolData.tokenVaultA;
+    const tokenVaultB = whirlpoolData.tokenVaultB;
+    const positionAddress = PDAUtil.getPosition(
+      ORCA_WHIRLPOOL_PROGRAM_ID,
+      positionMintAddress
+    )[0];
+
+    const balanceAtaA = (await getAccount(connection, ataA)).amount;
+    const balanceAtaB = (await getAccount(connection, ataB)).amount;
+    const balanceTokenVaultA = (await getAccount(connection, tokenVaultA))
+      .amount;
+    const balanceTokenVaultB = (await getAccount(connection, tokenVaultB))
+      .amount;
+    const position = await client.getPosition(positionAddress);
+    const lockType = (await position.getLockConfigData()).lockType;
+
+    assert.strictEqual(balanceAtaA, 0n);
+    assert.strictEqual(balanceAtaB, 0n);
+    assert.strictEqual(balanceTokenVaultA, tokenMaxA);
+    assert.strictEqual(balanceTokenVaultB, tokenMaxB);
+    assert.strictEqual(lockType, LockConfigUtil.getPermanentLockType());
   });
 });
-
-// test("spl logging", () => {
-//   const programId = PublicKey.unique();
-//   const svm = new LiteSVM();
-//   svm.addProgramFromFile(programId, "program_bytes/spl_example_logging.so");
-//   const payer = new Keypair();
-//   svm.airdrop(payer.publicKey, BigInt(LAMPORTS_PER_SOL));
-//   const blockhash = svm.latestBlockhash();
-//   const ixs = [
-//     new TransactionInstruction({
-//       programId,
-//       keys: [
-//         { pubkey: PublicKey.unique(), isSigner: false, isWritable: false },
-//       ],
-//     }),
-//   ];
-//   const tx = new Transaction();
-//   tx.recentBlockhash = blockhash;
-//   tx.add(...ixs);
-//   tx.sign(payer);
-//   // let's sim it first
-//   const simRes = svm.simulateTransaction(tx);
-//   const sendRes = svm.sendTransaction(tx);
-//   if (sendRes instanceof TransactionMetadata) {
-//     expect(simRes.meta().logs()).toEqual(sendRes.logs());
-//     expect(sendRes.logs()[1]).toBe("Program log: static string");
-//   } else {
-//     throw new Error("Unexpected tx failure");
-//   }
-// });

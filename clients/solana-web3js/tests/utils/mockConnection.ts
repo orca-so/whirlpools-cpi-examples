@@ -70,7 +70,6 @@ svm.addProgramFromFile(
   WHIRLPOOL_CPI_PROGRAM_ID,
   "./tests/fixtures/whirlpool_cpi.so"
 );
-
 export const signer = setupSigner(svm);
 export const connection = new MockConnection(svm);
 export const whirlpoolsConfigAddress = await setupConfigAndFeeTiers(

@@ -21,7 +21,6 @@ import { priceToSqrtPrice } from "@orca-so/whirlpools-core";
 import assert from "assert";
 
 describe("Launchpad CPI", () => {
-  let whirlpoolCpiProgramAddress: Address;
   let positionOwner: Address;
   let mintA: Address;
   let mintB: Address;
@@ -31,7 +30,6 @@ describe("Launchpad CPI", () => {
   let tokenMaxB: bigint = 1000000000000000000n;
 
   beforeAll(async () => {
-    whirlpoolCpiProgramAddress = WHIRLPOOL_CPI_PROGRAM_ADDRESS;
     positionOwner = (
       await getProgramDerivedAddress({
         programAddress: WHIRLPOOL_CPI_PROGRAM_ADDRESS,

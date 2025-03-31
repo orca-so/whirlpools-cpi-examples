@@ -7,6 +7,7 @@ import {
   SystemProgram,
   TransactionMessage,
   VersionedTransaction,
+  ComputeBudgetProgram,
 } from "@solana/web3.js";
 import { AnchorProvider, BN, Program, Wallet } from "@coral-xyz/anchor";
 import {
@@ -25,6 +26,7 @@ import Decimal from "decimal.js";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
+  getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
 import { METADATA_UPDATE_AUTH } from "./utils/constants";
@@ -158,7 +160,7 @@ export async function createGraduateTokenToOrcaTransaction(
     [Buffer.from("position_owner")],
     WHIRLPOOL_CPI_PROGRAM_ID
   ).publicKey;
-  const positionTokenAccount = await getAssociatedTokenAddress(
+  const positionTokenAccount = getAssociatedTokenAddressSync(
     positionMint.publicKey,
     positionOwner,
     true,
@@ -167,15 +169,15 @@ export async function createGraduateTokenToOrcaTransaction(
 
   const tokenProgramA = mintA.tokenProgram;
   const tokenProgramB = mintB.tokenProgram;
-  const tokenOwnerAccountA = await getAssociatedTokenAddress(
-    positionOwner,
+  const tokenOwnerAccountA = getAssociatedTokenAddressSync(
     mintA.address,
+    positionOwner,
     true,
     tokenProgramA
   );
-  const tokenOwnerAccountB = await getAssociatedTokenAddress(
-    positionOwner,
+  const tokenOwnerAccountB = getAssociatedTokenAddressSync(
     mintB.address,
+    positionOwner,
     true,
     tokenProgramB
   );
@@ -232,11 +234,14 @@ export async function createGraduateTokenToOrcaTransaction(
       memoProgram: MEMO_PROGRAM_ADDRESS,
     })
     .instruction();
+  const computeBudgetIx = ComputeBudgetProgram.setComputeUnitLimit({
+    units: 400_000,
+  });
 
   const messageV0 = new TransactionMessage({
     payerKey: funder.publicKey,
     recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-    instructions: [ix],
+    instructions: [computeBudgetIx, ix],
   }).compileToV0Message();
   const tx = new VersionedTransaction(messageV0);
   tx.sign([funder, tokenVaultA, tokenVaultB, positionMint]);
