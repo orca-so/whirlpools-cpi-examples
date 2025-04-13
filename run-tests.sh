@@ -152,7 +152,20 @@ echo -e "${GREEN}✓ Anchor CLI version set${NC}"
 if [ "$NEEDS_PATCH" = true ]; then
   echo -e "${BLUE}=== Applying solana-program patch ===${NC}"
   echo -e "${CYAN}Applying solana-program patch for Anchor $ANCHOR_VERSION${NC}"
-  cargo update solana-program@2.2.1 --precise 1.18.17
+  
+  # Get the latest solana-program version from cargo registry
+  echo -e "${CYAN}Checking latest solana-program version from cargo registry...${NC}"
+  LATEST_SOLANA_PROGRAM=$(cargo search solana-program --limit 1 | grep -o "solana-program = \"[0-9.]*\"" | cut -d '"' -f 2)
+  
+  if [ -z "$LATEST_SOLANA_PROGRAM" ]; then
+    echo -e "${RED}ERROR: Failed to retrieve the latest solana-program version from cargo registry! Exiting.${NC}"
+    exit 1
+  fi
+  
+  echo -e "${CYAN}Found solana-program version: ${YELLOW}$LATEST_SOLANA_PROGRAM${NC}"
+  echo -e "${CYAN}Applying patch: cargo update solana-program@$LATEST_SOLANA_PROGRAM --precise 1.18.17${NC}"
+  
+  cargo update solana-program@$LATEST_SOLANA_PROGRAM --precise 1.18.17
   check_status
   echo -e "${GREEN}✓ Patch applied${NC}"
 else

@@ -27,6 +27,11 @@ Each Anchor version requires a specific Solana CLI version:
 | v0.30.1        | v1.18.17           |
 | v0.31.0        | v2.1.0             |
 
+### Rust Version Compatibility
+
+- **Anchor v0.29.0 and v0.30.1**: Tested with Rust versions 1.78 - 1.82. Programs will not build with newer Rust versions.
+- **Anchor v0.31.0**: Compatible with newer Rust versions.
+
 ### Setting Up the Correct Environment
 
 #### 1. Install the Appropriate Solana CLI Version
@@ -54,9 +59,14 @@ avm use <version>  # Replace <version> with 0.29.0, 0.30.1, or 0.31.0
 For Anchor versions 0.29.0 and 0.30.1, you **must patch** the `solana-program` crate:
 
 - **Why?** These Anchor versions rely on `solana-program` crate < v2, while the Orca Whirlpools and Whirlpools SDK pull in `solana-program` > v2, creating version conflicts.
-- **Solution:** Apply the patch using:
+- **Solution:** Apply the patch by first determining the latest version and then downgrading it:
+
   ```bash
-  cargo update solana-program@2.2.1 --precise 1.18.17
+  # Get the latest solana-program version
+  LATEST_SOLANA_PROGRAM=$(cargo search solana-program --limit 1 | grep -o "solana-program = \"[0-9.]*\"" | cut -d '"' -f 2)
+
+  # Apply the patch
+  cargo update solana-program@$LATEST_SOLANA_PROGRAM --precise 1.18.17
   ```
 
 For Anchor version 0.31.0, **no patching is required** as it's compatible with `solana-program` > v2.
