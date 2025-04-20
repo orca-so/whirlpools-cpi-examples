@@ -141,6 +141,22 @@ eval $SOLANA_INSTALL_CMD
 check_status
 echo -e "${GREEN}✓ Solana CLI installed${NC}"
 
+# Download the Whirlpool program
+echo -e "${BLUE}=== Downloading Whirlpool program ===${NC}"
+echo -e "${CYAN}Downloading Whirlpool program from mainnet${NC}"
+WHIRLPOOL_ADDRESS="whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc"
+
+# Create fixtures directories if they don't exist
+mkdir -p ../clients/solana-kit/tests/fixtures/
+mkdir -p ../clients/solana-web3js/tests/fixtures/
+
+# Download the Whirlpool program
+solana program dump $WHIRLPOOL_ADDRESS ../clients/solana-kit/tests/fixtures/whirlpool.so
+check_status
+solana program dump $WHIRLPOOL_ADDRESS ../clients/solana-web3js/tests/fixtures/whirlpool.so
+check_status
+echo -e "${GREEN}✓ Whirlpool program downloaded${NC}"
+
 # Switch to the correct Anchor CLI version using AVM
 echo -e "${BLUE}=== Setting up Anchor CLI version ===${NC}"
 echo -e "${CYAN}Switching to Anchor CLI for $ANCHOR_VERSION${NC}"
@@ -237,6 +253,11 @@ echo -e "${CYAN}Installing dependencies with yarn${NC}"
 yarn install
 check_status
 echo -e "${GREEN}✓ Dependencies installed${NC}"
+
+echo -e "${BLUE}=== Copying program binary to test fixtures ===${NC}"
+cp ../../anchor-program/target/deploy/whirlpool_cpi.so tests/fixtures/
+check_status
+echo -e "${GREEN}✓ Program binary copied${NC}"
 
 echo -e "${BLUE}=== Running Web3.js client tests ===${NC}"
 echo -e "${CYAN}Running tests${NC}"

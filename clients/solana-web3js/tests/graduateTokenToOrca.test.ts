@@ -27,8 +27,8 @@ describe("Launchpad CPI", () => {
   let mintB: PublicKey;
   let ataA: PublicKey;
   let ataB: PublicKey;
-  const tokenMaxA = new BN("1000000000000000000");
-  const tokenMaxB = new BN("1000000000000000000");
+  const tokenMax0 = new BN("1000000000000000000");
+  const tokenMax1 = new BN("1000000000000000000");
 
   beforeAll(async () => {
     positionOwner = AddressUtil.findProgramAddress(
@@ -37,18 +37,18 @@ describe("Launchpad CPI", () => {
     ).publicKey;
     mintA = await setupMint({ decimals: 6 });
     mintB = await setupMint({ decimals: 6 });
-    ataA = await setupAta(mintA, { owner: positionOwner, amount: tokenMaxA });
-    ataB = await setupAta(mintB, { owner: positionOwner, amount: tokenMaxB });
+    ataA = await setupAta(mintA, { owner: positionOwner, amount: tokenMax0 });
+    ataB = await setupAta(mintB, { owner: positionOwner, amount: tokenMax1 });
   });
 
   it("Should graduate token to orca", async () => {
-    const { tx, whirlpoolAddress, positionMintAddress } =
+    const { tx, whirlpoolAddress, positionMintAddress, tokenMintA, tokenMintB } =
       await createGraduateTokenToOrcaTransaction(
         connection,
         whirlpoolsConfigAddress,
         signer,
-        tokenMaxA,
-        tokenMaxB,
+        tokenMax0,
+        tokenMax1,
         mintA,
         mintB
       );
@@ -73,19 +73,18 @@ describe("Launchpad CPI", () => {
       .amount;
     const balanceTokenVaultB = (await getAccount(connection, tokenVaultB))
       .amount;
-    // const lockConfig = await fetcher.getLockConfig(positionAddress);
-    // const lockType = lockConfig.lockType;
 
-    const lockConfigAccount = await connection.getAccountInfo(
+    const lockConfig = await fetcher.getLockConfig(
       PDAUtil.getLockConfig(ORCA_WHIRLPOOL_PROGRAM_ID, positionAddress)
         .publicKey
     );
+    const lockType = lockConfig.lockType;
+
     assert.strictEqual(BigInt(whirlpool.sqrtPrice), BigInt(sqrtPrice));
     assert.strictEqual(balanceAtaA, 0n);
     assert.strictEqual(balanceAtaB, 0n);
-    assert.strictEqual(balanceTokenVaultA, BigInt(tokenMaxA));
-    assert.strictEqual(balanceTokenVaultB, BigInt(tokenMaxB));
-    // assert.strictEqual(lockType, LockConfigUtil.getPermanentLockType());
-    assert.ok(lockConfigAccount);
+    assert.strictEqual(balanceTokenVaultA, BigInt(tokenMax0));
+    assert.strictEqual(balanceTokenVaultB, BigInt(tokenMax1));
+    assert.deepStrictEqual(lockType, LockConfigUtil.getPermanentLockType());
   });
 });

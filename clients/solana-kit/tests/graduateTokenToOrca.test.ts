@@ -26,8 +26,8 @@ describe("Launchpad CPI", () => {
   let mintB: Address;
   let ataA: Address;
   let ataB: Address;
-  let tokenMaxA: bigint = 1000000000000000000n;
-  let tokenMaxB: bigint = 1000000000000000000n;
+  let tokenMax0: bigint = 1000000000000000000n;
+  let tokenMax1: bigint = 1000000000000000000n;
 
   beforeAll(async () => {
     positionOwner = (
@@ -39,23 +39,23 @@ describe("Launchpad CPI", () => {
     mintA = await setupMint();
     mintB = await setupMint();
     ataA = await setupAta(mintA, {
-      amount: tokenMaxA,
+      amount: tokenMax0,
       owner: positionOwner,
     });
     ataB = await setupAta(mintB, {
-      amount: tokenMaxB,
+      amount: tokenMax1,
       owner: positionOwner,
     });
   });
 
   it("Should graduate token to orca", async () => {
-    const { ix, whirlpoolAddress, positionMintAddress } =
+    const { ix, whirlpoolAddress, positionMintAddress, tokenMintA, tokenMintB } =
       await createGraduateTokenToOrcaInstruction(
         rpc,
         WHIRLPOOLS_CONFIG_ADDRESS,
         signer,
-        tokenMaxA,
-        tokenMaxB,
+        tokenMax0,
+        tokenMax1,
         mintA,
         mintB
       );
@@ -81,8 +81,8 @@ describe("Launchpad CPI", () => {
     const lockType = (await fetchLockConfig(rpc, lockConfig)).data.lockType;
 
     assert.strictEqual(whirlpool.data.sqrtPrice, sqrtPrice);
-    assert.strictEqual(balanceTokenVaultA, tokenMaxA);
-    assert.strictEqual(balanceTokenVaultB, tokenMaxB);
+    assert.strictEqual(balanceTokenVaultA, tokenMax0);
+    assert.strictEqual(balanceTokenVaultB, tokenMax1);
     assert.strictEqual(balanceAtaA, 0n);
     assert.strictEqual(balanceAtaB, 0n);
     assert.strictEqual(lockType, LockType.Permanent);

@@ -12,4 +12,4 @@ url = "https://api.apr.dev"
 
 [provider]
 cluster = "Localnet"
-wallet = "/Users/calintje/.config/solana/id.json"
+wallet = "~/.config/solana/id.json"

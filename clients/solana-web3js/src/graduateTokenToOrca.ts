@@ -3,7 +3,6 @@ import {
   Keypair,
   PublicKey,
   SYSVAR_RENT_PUBKEY,
-  Transaction,
   SystemProgram,
   TransactionMessage,
   VersionedTransaction,
@@ -25,7 +24,6 @@ import { AddressUtil, Percentage } from "@orca-so/common-sdk";
 import Decimal from "decimal.js";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
   getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
@@ -45,14 +43,16 @@ export async function createGraduateTokenToOrcaTransaction(
   connection: Connection,
   whirlpoolsConfigAddress: PublicKey,
   funder: Keypair,
-  tokenMaxA: BN,
-  tokenMaxB: BN,
-  tokenMintAddressA: PublicKey,
-  tokenMintAddressB: PublicKey
+  tokenMax0: BN,
+  tokenMax1: BN,
+  tokenMintAddress0: PublicKey,
+  tokenMintAddress1: PublicKey
 ): Promise<{
   tx: VersionedTransaction;
   whirlpoolAddress: PublicKey;
   positionMintAddress: PublicKey;
+  tokenMintA: PublicKey;
+  tokenMintB: PublicKey;
 }> {
   const provider = new AnchorProvider(connection, new Wallet(funder), {
     commitment: "confirmed",
@@ -63,11 +63,15 @@ export async function createGraduateTokenToOrcaTransaction(
     ORCA_WHIRLPOOL_PROGRAM_ID
   );
 
-  const [orderedTokenMintAddressA, orderedTokenMintAddressB] =
-    PoolUtil.orderMints(tokenMintAddressA, tokenMintAddressB);
+  const [tokenMintAddressA, tokenMintAddressB] =
+    PoolUtil.orderMints(tokenMintAddress0, tokenMintAddress1);
 
-  const mintA = await ctx.fetcher.getMintInfo(orderedTokenMintAddressA);
-  const mintB = await ctx.fetcher.getMintInfo(orderedTokenMintAddressB);
+  const isReordered = tokenMintAddressA !== tokenMintAddress0;
+  const tokenMaxA = isReordered ? tokenMax1 : tokenMax0;
+  const tokenMaxB = isReordered ? tokenMax0 : tokenMax1;
+
+  const mintA = await ctx.fetcher.getMintInfo(tokenMintAddressA);
+  const mintB = await ctx.fetcher.getMintInfo(tokenMintAddressB);
 
   const initialPrice = new Decimal(
     tokenMaxB
@@ -99,7 +103,7 @@ export async function createGraduateTokenToOrcaTransaction(
   );
 
   const withTokenMetadataExtension = true;
-  const liquidityAmountQuote = increaseLiquidityQuoteByInputTokenWithParams({
+  const liquidityAmountQuoteA = increaseLiquidityQuoteByInputTokenWithParams({
     inputTokenAmount: tokenMaxA,
     inputTokenMint: mintA.address,
     tokenMintA: mintA.address,
@@ -115,6 +119,26 @@ export async function createGraduateTokenToOrcaTransaction(
     },
     slippageTolerance: new Percentage(new BN(0), new BN(100)),
   });
+  const liquidityAmountQuoteB = increaseLiquidityQuoteByInputTokenWithParams({
+    inputTokenAmount: tokenMaxB,
+    inputTokenMint: mintB.address,
+    tokenMintA: mintA.address,
+    tokenMintB: mintB.address,
+    tickCurrentIndex: initialTickIndex,
+    sqrtPrice: initialSqrtPrice,
+    tickLowerIndex,
+    tickUpperIndex,
+    tokenExtensionCtx: {
+      currentEpoch: await ctx.fetcher.getEpoch(),
+      tokenMintWithProgramA: mintA,
+      tokenMintWithProgramB: mintB,
+    },
+    slippageTolerance: new Percentage(new BN(0), new BN(100)),
+  });
+
+  const liquidityAmount = liquidityAmountQuoteA.liquidityAmount < liquidityAmountQuoteB.liquidityAmount
+    ? liquidityAmountQuoteA.liquidityAmount
+    : liquidityAmountQuoteB.liquidityAmount;
 
   const whirlpoolAddress = PDAUtil.getWhirlpool(
     ORCA_WHIRLPOOL_PROGRAM_ID,
@@ -200,7 +224,7 @@ export async function createGraduateTokenToOrcaTransaction(
       tickLowerIndex,
       tickUpperIndex,
       withTokenMetadataExtension,
-      liquidityAmountQuote.liquidityAmount,
+      liquidityAmount,
       tokenMaxA,
       tokenMaxB
     )
@@ -251,6 +275,8 @@ export async function createGraduateTokenToOrcaTransaction(
     tx,
     whirlpoolAddress,
     positionMintAddress: positionMint.publicKey,
+    tokenMintA: mintA.address,
+    tokenMintB: mintB.address
   };
 }
 

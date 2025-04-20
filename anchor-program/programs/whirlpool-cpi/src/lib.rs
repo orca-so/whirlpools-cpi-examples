@@ -36,6 +36,3 @@ pub mod whirlpool_cpi {
         )
     }
 }
-
-#[derive(Accounts)]
-pub struct TestCpi {}

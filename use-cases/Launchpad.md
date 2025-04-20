@@ -70,15 +70,15 @@ The `@solana/kit` client provides a modern approach for your launchpad frontend 
 import { createGraduateTokenToOrcaInstruction } from "../src/graduateTokenToOrca";
 
 // Sample usage in your launchpad's frontend
-const { ix, whirlpoolAddress, positionMintAddress } =
+const { ix, whirlpoolAddress, positionMintAddress, tokenMintA, tokenMintB } =
   await createGraduateTokenToOrcaInstruction(
     rpc,
     WHIRLPOOLS_CONFIG_ADDRESS,
     funder, // The account that will pay for transactions
-    tokenMaxA, // Amount of token A from your bonding curve
-    tokenMaxB, // Amount of token B from your bonding curve
-    mintA, // Token A mint address
-    mintB // Token B mint address
+    tokenMax0, // Amount of first token from your bonding curve
+    tokenMax1, // Amount of second token from your bonding curve
+    mintA, // First token mint address
+    mintB // Second token mint address
   );
 
 // Send the transaction to your launchpad program
@@ -102,15 +102,15 @@ The traditional web3.js implementation offers compatibility with existing Anchor
 import { createGraduateTokenToOrcaTransaction } from "../src/graduateTokenToOrca";
 
 // Sample usage in your launchpad's frontend
-const { tx, whirlpoolAddress, positionMintAddress } =
+const { tx, whirlpoolAddress, positionMintAddress, tokenMintA, tokenMintB } =
   await createGraduateTokenToOrcaTransaction(
     connection,
     whirlpoolsConfigAddress,
     funder, // Keypair that will sign and pay for the transaction
-    tokenMaxA, // BN amount of token A from your bonding curve
-    tokenMaxB, // BN amount of token B from your bonding curve
-    mintA, // Token A mint address
-    mintB // Token B mint address
+    tokenMax0, // BN amount of first token from your bonding curve
+    tokenMax1, // BN amount of second token from your bonding curve
+    mintA, // First token mint address
+    mintB // Second token mint address
   );
 
 // Send the transaction to your launchpad program
@@ -139,9 +139,9 @@ export function orderMints(mint1: Address, mint2: Address): [Address, Address] {
 }
 
 // Usage in graduateTokenToOrca.ts
-const [orderedTokenMintAddressA, orderedTokenMintAddressB] = orderMints(
-  tokenMintAddressA,
-  tokenMintAddressB
+const [tokenMintAddressA, tokenMintAddressB] = orderMints(
+  tokenMintAddress0,
+  tokenMintAddress1
 );
 ```
 
@@ -150,12 +150,19 @@ const [orderedTokenMintAddressA, orderedTokenMintAddressB] = orderMints(
 ```typescript
 // Usage in graduateTokenToOrca.ts
 const [orderedTokenMintAddressA, orderedTokenMintAddressB] =
-  PoolUtil.orderMints(tokenMintAddressA, tokenMintAddressB);
+  PoolUtil.orderMints(tokenMintAddress0, tokenMintAddress1);
 ```
 
 Our client implementations handle all aspects of this process, including the price calculation based on the amounts in your bonding curve (adjusted for any token reordering that may occur):
 
 ```typescript
+// Original inputs are tokenMax0 and tokenMax1
+// After ordering, we map them to tokenMaxA and tokenMaxB based on canonical ordering
+const isReordered = tokenMintAddressA !== tokenMintAddress0;
+const tokenMaxA = isReordered ? tokenMax1 : tokenMax0;
+const tokenMaxB = isReordered ? tokenMax0 : tokenMax1;
+
+// Then calculate price using the ordered values
 const initialPrice = Number(
   (tokenMaxB * BigInt(10 ** decimalsA)) / (tokenMaxA * BigInt(10 ** decimalsB))
 );
