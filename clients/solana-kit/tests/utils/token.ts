@@ -103,3 +103,4 @@ export async function setupMint(
 
   return keypair.address;
 }
+
