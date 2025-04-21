@@ -67,22 +67,6 @@ export async function setupMint2022(
         }),
     );
 
-    for (const extension of config.extensions ?? []) {
-        switch (extension.__kind) {
-            case "TransferFeeConfig":
-                instructions.push(
-                    getInitializeTransferFeeConfigInstruction({
-                        mint: keypair.address,
-                        transferFeeConfigAuthority: signer.address,
-                        withdrawWithheldAuthority: signer.address,
-                        transferFeeBasisPoints:
-                            extension.olderTransferFee.transferFeeBasisPoints,
-                        maximumFee: extension.olderTransferFee.maximumFee,
-                    }),
-                );
-        }
-    }
-
     instructions.push(
         getInitializeMint2Instruction({
             mint: keypair.address,
@@ -91,21 +75,6 @@ export async function setupMint2022(
             decimals: config.decimals ?? 6,
         }),
     );
-
-    for (const extension of config.extensions ?? []) {
-        switch (extension.__kind) {
-            case "TransferFeeConfig":
-                instructions.push(
-                    getSetTransferFeeInstruction({
-                        mint: keypair.address,
-                        transferFeeConfigAuthority: signer.address,
-                        transferFeeBasisPoints:
-                            extension.newerTransferFee.transferFeeBasisPoints,
-                        maximumFee: extension.newerTransferFee.maximumFee,
-                    }),
-                );
-        }
-    }
 
     await sendTransaction(instructions);
 
