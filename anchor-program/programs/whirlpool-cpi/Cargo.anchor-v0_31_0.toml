@@ -22,3 +22,4 @@ solana-program = { version = "=2.1.0" }                 # solana-cli version mus
 anchor-lang = { version = "=0.31" }
 anchor-spl = { version = "=0.31", features = ["memo"] }
 orca_whirlpools_client = { version = "^2.0.0" }
+orca_whirlpools_core = { version = "^1.0.0" }

@@ -8,6 +8,7 @@ use orca_whirlpools_client::{
     OpenPositionWithTokenExtensionsCpi, OpenPositionWithTokenExtensionsCpiAccounts,
     OpenPositionWithTokenExtensionsInstructionArgs,
 };
+use orca_whirlpools_core::try_get_token_estimates_from_liquidity;
 use solana_program::pubkey::Pubkey;
 
 #[derive(Accounts)]
@@ -85,8 +86,6 @@ pub fn handler(
     tick_upper_index: i32,
     with_token_metadata_extension: bool,
     liquidity_amount: u128,
-    token_max_a: u64,
-    token_max_b: u64,
 ) -> Result<()> {
     let whirlpool_program = ctx.accounts.whirlpool_program.to_account_info();
     let position_owner_seeds = &[b"position_owner".as_ref(), &[ctx.bumps.position_owner]];
@@ -120,10 +119,20 @@ pub fn handler(
         with_token_metadata_extension,
     )?;
 
+    let (token_max_a, token_max_b) = try_get_token_estimates_from_liquidity(
+        liquidity_amount,
+        initial_sqrt_price,
+        tick_lower_index,
+        tick_upper_index,
+        true,
+    )
+    .expect("Failed to get token estimates from liquidity");
+
     increase_liquidity_cpi(
         &whirlpool_program,
         &ctx.accounts,
         liquidity_amount,
+        initial_sqrt_price,
         token_max_a,
         token_max_b,
         position_owner_seeds,
@@ -225,6 +234,7 @@ fn increase_liquidity_cpi<'a>(
     whirlpool_program: &AccountInfo<'a>,
     accounts: &GraduateTokenToOrca<'a>,
     liquidity_amount: u128,
+    initial_sqrt_price: u128,
     token_max_a: u64,
     token_max_b: u64,
     position_owner_seeds: &[&[u8]],

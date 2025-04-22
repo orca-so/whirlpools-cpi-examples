@@ -22,6 +22,7 @@ import {
   getFullRangeTickIndexes,
   increaseLiquidityQuoteB,
 } from "@orca-so/whirlpools-core";
+import { orderMints } from "@orca-so/whirlpools"
 import {
   ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
   TOKEN_2022_PROGRAM_ADDRESS,
@@ -31,7 +32,6 @@ import {
 import { SYSTEM_PROGRAM_ADDRESS } from "@solana-program/system";
 import { MEMO_PROGRAM_ADDRESS } from "@solana-program/memo";
 import { SYSVAR_RENT_ADDRESS } from "@solana/sysvars";
-import { orderMints } from "./utils/token";
 import {
   METADATA_UPDATE_AUTH,
   SPLASH_POOL_TICK_SPACING,
@@ -47,8 +47,8 @@ export async function createGraduateTokenToOrcaInstruction(
   rpc: Rpc<SolanaRpcApi>,
   whirlpoolsConfigAddress: Address,
   funder: KeyPairSigner,
-  tokenMax0: bigint,
-  tokenMax1: bigint,
+  tokenAmount0: bigint,
+  tokenAmount1: bigint,
   tokenMintAddress0: Address,
   tokenMintAddress1: Address
 ): Promise<{
@@ -64,17 +64,17 @@ export async function createGraduateTokenToOrcaInstruction(
   );
 
   const isReordered = tokenMintAddressA !== tokenMintAddress0;
-  const tokenMaxA = isReordered ? tokenMax1 : tokenMax0;
-  const tokenMaxB = isReordered ? tokenMax0 : tokenMax1;
+  const tokenAmountA = isReordered ? tokenAmount1 : tokenAmount0;
+  const tokenAmountB = isReordered ? tokenAmount0 : tokenAmount1;
 
   const tokenMintA = await fetchMint(rpc, tokenMintAddressA);
   const tokenMintB = await fetchMint(rpc, tokenMintAddressB);
   const decimalsA = tokenMintA.data.decimals;
   const decimalsB = tokenMintB.data.decimals;
 
-  const initialPrice = new Decimal(tokenMaxB.toString())
+  const initialPrice = new Decimal(tokenAmountB.toString())
     .mul(new Decimal(10).pow(decimalsA))
-    .div(new Decimal(tokenMaxA.toString()).mul(new Decimal(10).pow(decimalsB)));
+    .div(new Decimal(tokenAmountA.toString()).mul(new Decimal(10).pow(decimalsB)));
 
   const initialSqrtPrice = priceToSqrtPrice(initialPrice.toNumber(), decimalsA, decimalsB);
 
@@ -91,14 +91,14 @@ export async function createGraduateTokenToOrcaInstruction(
   );
   const withTokenMetadataExtension = true;
   const liquidityAmountQuoteA = increaseLiquidityQuoteA(
-    BigInt(tokenMaxA.toString()),
+    BigInt(tokenAmountA.toString()),
     0,
     initialSqrtPrice,
     tickLowerIndex,
     tickUpperIndex
   );
   const liquidityAmountQuoteB = increaseLiquidityQuoteB(
-    BigInt(tokenMaxB.toString()),
+    BigInt(tokenAmountB.toString()),
     0,
     initialSqrtPrice,
     tickLowerIndex,
@@ -218,8 +218,6 @@ export async function createGraduateTokenToOrcaInstruction(
     tickUpperIndex,
     withTokenMetadataExtension,
     liquidityAmount: liquidityDelta,
-    tokenMaxA,
-    tokenMaxB,
   });
 
   return {

@@ -8,7 +8,7 @@ import {
   getProgramDerivedAddress,
 } from "@solana/kit";
 import { setupAta, setupMint } from "./utils/token";
-import { WHIRLPOOLS_CONFIG_ADDRESS } from "@orca-so/whirlpools";
+import { WHIRLPOOLS_CONFIG_ADDRESS, orderMints } from "@orca-so/whirlpools";
 import {
   fetchLockConfig,
   fetchWhirlpool,
@@ -21,17 +21,20 @@ import { priceToSqrtPrice } from "@orca-so/whirlpools-core";
 import assert from "assert";
 import Decimal from "decimal.js";
 import { setupAta2022, setupMint2022 } from "./utils/token2022";
-import { orderMints } from "../src/utils/token";
 
 describe("Launchpad CPI", () => {
-  it("Should graduate Tokenkeg tokens to orca with token remainders", async () => {
+  // Run multiple tests to account for randomness in token ordering.
+  // When pairing a token and token-2022, the client code must reorder them
+  // based on canonical ordering, which introduces variability in how tokens
+  // are processed. Running multiple tests ensures we cover different ordering scenarios.
+  it.each(Array.from({ length: 10 }, (_, i) => i + 1))("Should graduate token to orca (Test %s)", async (testNumber) => {
     // Setup test values
     const decimals0: number = 9;
     const decimals1: number = 6;
-    const tokenMax0: bigint = 138000000000n;
-    const tokenMax1: bigint = 1000000000000000001n;
+    const tokenAmount0: bigint = 138000000000n;
+    const tokenAmount1: bigint = 1000000000000000001n;
 
-    // Setup position owner address
+    // Get position owner address
     const positionOwner = (
       await getProgramDerivedAddress({
         programAddress: WHIRLPOOL_CPI_PROGRAM_ADDRESS,
@@ -43,11 +46,11 @@ describe("Launchpad CPI", () => {
     const mint0 = await setupMint({ decimals: decimals0 });
     const mint1 = await setupMint2022({ decimals: decimals1 });
     const ata0 = await setupAta(mint0, {
-      amount: tokenMax0,
+      amount: tokenAmount0,
       owner: positionOwner,
     });
     const ata1 = await setupAta2022(mint1, {
-      amount: tokenMax1,
+      amount: tokenAmount1,
       owner: positionOwner,
     });
 
@@ -57,33 +60,33 @@ describe("Launchpad CPI", () => {
         rpc,
         WHIRLPOOLS_CONFIG_ADDRESS,
         signer,
-        tokenMax0,
-        tokenMax1,
+        tokenAmount0,
+        tokenAmount1,
         mint0,
         mint1
       );
     await sendTransaction([ix]);
 
-    // THE FOLLOWINGPART IS ONLY NEEDED TO ASSERT THE RESULTS
+    // THE FOLLOWING PART IS ONLY NEEDED TO ASSERT THE RESULTS
     // Determine token ordering - 
     const [mintA, mintB] = orderMints(mint0, mint1);
     const isReordered = mintA !== mint0;
-    let tokenMaxA: bigint;
-    let tokenMaxB: bigint;
+    let tokenAmountA: bigint;
+    let tokenAmountB: bigint;
     let decimalsA: number;
     let decimalsB: number;
     let ataA: Address;
     let ataB: Address;
     if (isReordered) {
-      tokenMaxA = tokenMax1;
-      tokenMaxB = tokenMax0;
+      tokenAmountA = tokenAmount1;
+      tokenAmountB = tokenAmount0;
       decimalsA = decimals1;
       decimalsB = decimals0;
       ataA = ata1;
       ataB = ata0;
     } else {
-      tokenMaxA = tokenMax0;
-      tokenMaxB = tokenMax1;
+      tokenAmountA = tokenAmount0;
+      tokenAmountB = tokenAmount1;
       decimalsA = decimals0;
       decimalsB = decimals1;
       ataA = ata0;
@@ -91,9 +94,9 @@ describe("Launchpad CPI", () => {
     }
 
     // Calculate expected price
-    const price = new Decimal(tokenMaxB.toString())
+    const price = new Decimal(tokenAmountB.toString())
       .mul(new Decimal(10).pow(decimalsA))
-      .div(new Decimal(tokenMaxA.toString()).mul(new Decimal(10).pow(decimalsB)));
+      .div(new Decimal(tokenAmountA.toString()).mul(new Decimal(10).pow(decimalsB)));
     const sqrtPrice = priceToSqrtPrice(
       price.toNumber(),
       decimalsA,
@@ -122,15 +125,15 @@ describe("Launchpad CPI", () => {
     // Allow for small differences due to rounding
     const maxDiffPercentage = 0.005;
 
-    const tokenVaultADiff = balanceTokenVaultA > tokenMaxA
-      ? balanceTokenVaultA - tokenMaxA
-      : tokenMaxA - balanceTokenVaultA;
-    const tokenVaultBDiff = balanceTokenVaultB > tokenMaxB
-      ? balanceTokenVaultB - tokenMaxB
-      : tokenMaxB - balanceTokenVaultB;
+    const tokenVaultADiff = balanceTokenVaultA > tokenAmountA
+      ? balanceTokenVaultA - tokenAmountA
+      : tokenAmountA - balanceTokenVaultA;
+    const tokenVaultBDiff = balanceTokenVaultB > tokenAmountB
+      ? balanceTokenVaultB - tokenAmountB
+      : tokenAmountB - balanceTokenVaultB;
 
-    const tokenVaultADiffPercentage = Number(tokenVaultADiff) / Number(tokenMaxA);
-    const tokenVaultBDiffPercentage = Number(tokenVaultBDiff) / Number(tokenMaxB);
+    const tokenVaultADiffPercentage = Number(tokenVaultADiff) / Number(tokenAmountA);
+    const tokenVaultBDiffPercentage = Number(tokenVaultBDiff) / Number(tokenAmountB);
 
     // Assertions
     assert.strictEqual(whirlpool.data.sqrtPrice, sqrtPrice);

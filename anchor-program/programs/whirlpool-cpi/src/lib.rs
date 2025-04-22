@@ -18,8 +18,6 @@ pub mod whirlpool_cpi {
         tick_upper_index: i32,
         with_token_metadata_extension: bool,
         liquidity_amount: u128,
-        token_max_a: u64,
-        token_max_b: u64,
     ) -> Result<()> {
         instructions::graduate_token_to_orca::handler(
             ctx,
@@ -31,8 +29,6 @@ pub mod whirlpool_cpi {
             tick_upper_index,
             with_token_metadata_extension,
             liquidity_amount,
-            token_max_a,
-            token_max_b,
         )
     }
 }

@@ -168,6 +168,14 @@ const initialPrice = Number(
 );
 ```
 
+## Important: Understanding Token Leftovers in Your Bonding Curve Vaults
+
+When graduating tokens to an Orca Splash Pool, you may notice that some tokens remain in your bonding curve vaults. This is normal with CLMMs and happens because the protocol calculates the mathematically optimal token amounts needed for your liquidity position.
+
+For example, if you're providing 138 tokens with 9 decimal places, you might find that 0.000192373 tokens remain in your original vault. These leftovers can vary based on your token's decimals and quantities.
+
+As a launchpad creator, plan for these leftovers in your implementation and include logic to handle the remaining tokens appropriately (return to users or keep in treasury).
+
 ## Complete Integration Process
 
 1. Implement the launchpad program using the provided Anchor program example

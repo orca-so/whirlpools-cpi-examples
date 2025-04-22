@@ -43,8 +43,8 @@ export async function createGraduateTokenToOrcaTransaction(
   connection: Connection,
   whirlpoolsConfigAddress: PublicKey,
   funder: Keypair,
-  tokenMax0: BN,
-  tokenMax1: BN,
+  tokenAmount0: BN,
+  tokenAmount1: BN,
   tokenMintAddress0: PublicKey,
   tokenMintAddress1: PublicKey
 ): Promise<{
@@ -67,18 +67,14 @@ export async function createGraduateTokenToOrcaTransaction(
     PoolUtil.orderMints(tokenMintAddress0, tokenMintAddress1);
 
   const isReordered = tokenMintAddressA !== tokenMintAddress0;
-  const tokenMaxA = isReordered ? tokenMax1 : tokenMax0;
-  const tokenMaxB = isReordered ? tokenMax0 : tokenMax1;
+  const tokenAmountA = isReordered ? tokenAmount1 : tokenAmount0;
+  const tokenAmountB = isReordered ? tokenAmount0 : tokenAmount1;
 
   const mintA = await ctx.fetcher.getMintInfo(tokenMintAddressA);
   const mintB = await ctx.fetcher.getMintInfo(tokenMintAddressB);
 
-  const initialPrice = new Decimal(
-    tokenMaxB
-      .mul(new BN(10).pow(new BN(mintA.decimals)))
-      .div(tokenMaxA.mul(new BN(10).pow(new BN(mintB.decimals))))
-      .toString()
-  );
+  const initialPrice =
+    new Decimal((tokenAmountB * 10 ** mintA.decimals) / (tokenAmountA * 10 ** mintB.decimals));
   const initialSqrtPrice = PriceMath.priceToSqrtPriceX64(
     initialPrice,
     mintA.decimals,
@@ -104,7 +100,7 @@ export async function createGraduateTokenToOrcaTransaction(
 
   const withTokenMetadataExtension = true;
   const liquidityAmountQuoteA = increaseLiquidityQuoteByInputTokenWithParams({
-    inputTokenAmount: tokenMaxA,
+    inputTokenAmount: tokenAmountA,
     inputTokenMint: mintA.address,
     tokenMintA: mintA.address,
     tokenMintB: mintB.address,
@@ -120,7 +116,7 @@ export async function createGraduateTokenToOrcaTransaction(
     slippageTolerance: new Percentage(new BN(0), new BN(100)),
   });
   const liquidityAmountQuoteB = increaseLiquidityQuoteByInputTokenWithParams({
-    inputTokenAmount: tokenMaxB,
+    inputTokenAmount: tokenAmountB,
     inputTokenMint: mintB.address,
     tokenMintA: mintA.address,
     tokenMintB: mintB.address,
@@ -225,8 +221,6 @@ export async function createGraduateTokenToOrcaTransaction(
       tickUpperIndex,
       withTokenMetadataExtension,
       liquidityAmount,
-      tokenMaxA,
-      tokenMaxB
     )
     .accounts({
       whirlpoolProgram: ORCA_WHIRLPOOL_PROGRAM_ID,

@@ -10,11 +10,11 @@ import {
   createMintToInstruction,
   getAssociatedTokenAddressSync,
   MINT_SIZE,
-  TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
 import { signer, connection } from "./mockConnection";
 
-export async function setupMint(config: { decimals?: number }) {
+export async function setupMint2022(config: { decimals?: number }) {
   const mintKeypair = Keypair.generate();
   const tx = new Transaction();
   tx.add(
@@ -23,7 +23,7 @@ export async function setupMint(config: { decimals?: number }) {
       newAccountPubkey: mintKeypair.publicKey,
       space: MINT_SIZE,
       lamports: 1e8,
-      programId: TOKEN_PROGRAM_ID,
+      programId: TOKEN_2022_PROGRAM_ID,
     })
   );
   tx.add(
@@ -32,7 +32,7 @@ export async function setupMint(config: { decimals?: number }) {
       config.decimals ?? 6,
       signer.publicKey,
       null,
-      TOKEN_PROGRAM_ID
+      TOKEN_2022_PROGRAM_ID
     )
   );
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -42,7 +42,7 @@ export async function setupMint(config: { decimals?: number }) {
   return mintKeypair.publicKey;
 }
 
-export async function setupAta(
+export async function setupAta2022(
   mint: PublicKey,
   config: { owner?: PublicKey; amount?: number | bigint }
 ) {
@@ -51,18 +51,25 @@ export async function setupAta(
     mint,
     config.owner ?? signer.publicKey,
     true,
-    TOKEN_PROGRAM_ID
+    TOKEN_2022_PROGRAM_ID
   );
   tx.add(
     createAssociatedTokenAccountInstruction(
       signer.publicKey,
       ata,
       config.owner ?? signer.publicKey,
-      mint
+      mint,
+      TOKEN_2022_PROGRAM_ID
     )
   );
   tx.add(
-    createMintToInstruction(mint, ata, signer.publicKey, config.amount ?? 1e12)
+    createMintToInstruction(
+      mint,
+      ata,
+      signer.publicKey,
+      config.amount ?? 1e12,
+      [],
+      TOKEN_2022_PROGRAM_ID)
   );
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
   tx.sign(signer);
