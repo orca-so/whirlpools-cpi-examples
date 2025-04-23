@@ -15,7 +15,8 @@
     },
     "devDependencies": {
         "litesvm": "^0.2.0",
-        "vitest": "^3.0.9"
+        "vitest": "^3.0.9",
+        "@types/bn.js": "~5.1.6"
     },
     "resolutions": {
         "@coral-xyz/anchor": "0.30.1",

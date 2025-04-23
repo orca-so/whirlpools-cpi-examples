@@ -75,10 +75,10 @@ const { ix, whirlpoolAddress, positionMintAddress, tokenMintA, tokenMintB } =
     rpc,
     WHIRLPOOLS_CONFIG_ADDRESS,
     funder, // The account that will pay for transactions
-    tokenMax0, // Amount of first token from your bonding curve
-    tokenMax1, // Amount of second token from your bonding curve
-    mintA, // First token mint address
-    mintB // Second token mint address
+    tokenAmount0, // Amount of first token from your bonding curve
+    tokenAmount1, // Amount of second token from your bonding curve
+    tokenMintAddress0, // First token mint address
+    tokenMintAddress1 // Second token mint address
   );
 
 // Send the transaction to your launchpad program
@@ -107,10 +107,10 @@ const { tx, whirlpoolAddress, positionMintAddress, tokenMintA, tokenMintB } =
     connection,
     whirlpoolsConfigAddress,
     funder, // Keypair that will sign and pay for the transaction
-    tokenMax0, // BN amount of first token from your bonding curve
-    tokenMax1, // BN amount of second token from your bonding curve
-    mintA, // First token mint address
-    mintB // Second token mint address
+    tokenAmount0, // BN amount of first token from your bonding curve
+    tokenAmount1, // BN amount of second token from your bonding curve
+    tokenMintAddress0, // First token mint address
+    tokenMintAddress1 // Second token mint address
   );
 
 // Send the transaction to your launchpad program
@@ -156,16 +156,18 @@ const [orderedTokenMintAddressA, orderedTokenMintAddressB] =
 Our client implementations handle all aspects of this process, including the price calculation based on the amounts in your bonding curve (adjusted for any token reordering that may occur):
 
 ```typescript
-// Original inputs are tokenMax0 and tokenMax1
-// After ordering, we map them to tokenMaxA and tokenMaxB based on canonical ordering
+// Original inputs are tokenAmount0 and tokenAmount1
+// After ordering, we map them to tokenAmountA and tokenAmountB based on canonical ordering
 const isReordered = tokenMintAddressA !== tokenMintAddress0;
-const tokenMaxA = isReordered ? tokenMax1 : tokenMax0;
-const tokenMaxB = isReordered ? tokenMax0 : tokenMax1;
+const tokenAmountA = isReordered ? tokenAmount1 : tokenAmount0;
+const tokenAmountB = isReordered ? tokenAmount0 : tokenAmount1;
 
 // Then calculate price using the ordered values
-const initialPrice = Number(
-  (tokenMaxB * BigInt(10 ** decimalsA)) / (tokenMaxA * BigInt(10 ** decimalsB))
-);
+const initialPrice = new Decimal(tokenAmountB.toString())
+  .mul(new Decimal(10).pow(decimalsA))
+  .div(
+    new Decimal(tokenAmountA.toString()).mul(new Decimal(10).pow(decimalsB))
+  );
 ```
 
 ## Important: Understanding Token Leftovers in Your Bonding Curve Vaults

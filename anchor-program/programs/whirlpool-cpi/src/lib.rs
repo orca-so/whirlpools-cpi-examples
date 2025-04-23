@@ -16,6 +16,8 @@ pub mod whirlpool_cpi {
         start_tick_index_upper: i32,
         tick_lower_index: i32,
         tick_upper_index: i32,
+        token_max_a: u64,
+        token_max_b: u64,
         with_token_metadata_extension: bool,
         liquidity_amount: u128,
     ) -> Result<()> {
@@ -27,6 +29,8 @@ pub mod whirlpool_cpi {
             start_tick_index_upper,
             tick_lower_index,
             tick_upper_index,
+            token_max_a,
+            token_max_b,
             with_token_metadata_extension,
             liquidity_amount,
         )

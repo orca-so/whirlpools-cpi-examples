@@ -151,9 +151,9 @@ mkdir -p ../clients/solana-kit/tests/fixtures/
 mkdir -p ../clients/solana-web3js/tests/fixtures/
 
 # Download the Whirlpool program
-solana program dump $WHIRLPOOL_ADDRESS ../clients/solana-kit/tests/fixtures/whirlpool.so
+solana program -um dump $WHIRLPOOL_ADDRESS ../clients/solana-kit/tests/fixtures/whirlpool.so
 check_status
-solana program dump $WHIRLPOOL_ADDRESS ../clients/solana-web3js/tests/fixtures/whirlpool.so
+solana program -um dump $WHIRLPOOL_ADDRESS ../clients/solana-web3js/tests/fixtures/whirlpool.so
 check_status
 echo -e "${GREEN}✓ Whirlpool program downloaded${NC}"
 

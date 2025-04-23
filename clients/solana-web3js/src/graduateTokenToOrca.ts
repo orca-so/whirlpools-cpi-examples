@@ -73,8 +73,15 @@ export async function createGraduateTokenToOrcaTransaction(
   const mintA = await ctx.fetcher.getMintInfo(tokenMintAddressA);
   const mintB = await ctx.fetcher.getMintInfo(tokenMintAddressB);
 
-  const initialPrice =
-    new Decimal((tokenAmountB * 10 ** mintA.decimals) / (tokenAmountA * 10 ** mintB.decimals));
+  const initialPrice = new Decimal(
+    tokenAmountB.toString()
+  )
+    .mul(new Decimal(10).pow(mintA.decimals))
+    .div(
+      new Decimal(tokenAmountA.toString())
+        .mul(new Decimal(10).pow(mintB.decimals))
+    );
+  console.log("initialPrice", initialPrice);
   const initialSqrtPrice = PriceMath.priceToSqrtPriceX64(
     initialPrice,
     mintA.decimals,
@@ -219,6 +226,8 @@ export async function createGraduateTokenToOrcaTransaction(
       startTickIndexUpper,
       tickLowerIndex,
       tickUpperIndex,
+      tokenAmountA,
+      tokenAmountB,
       withTokenMetadataExtension,
       liquidityAmount,
     )

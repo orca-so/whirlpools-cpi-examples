@@ -216,6 +216,8 @@ export async function createGraduateTokenToOrcaInstruction(
     startTickIndexUpper,
     tickLowerIndex,
     tickUpperIndex,
+    tokenMaxA: tokenAmountA,
+    tokenMaxB: tokenAmountB,
     withTokenMetadataExtension,
     liquidityAmount: liquidityDelta,
   });

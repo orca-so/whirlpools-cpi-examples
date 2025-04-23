@@ -39,8 +39,8 @@ describe("Launchpad CPI", () => {
     const mint1 = await setupMint2022({ decimals: decimals1 });
     const tokenAmount0 = new BN("138000000000");
     const tokenAmount1 = new BN("1000000000000000001");
-    const ata0 = await setupAta(mint0, { owner: positionOwner, amount: tokenAmount0 });
-    const ata1 = await setupAta2022(mint1, { owner: positionOwner, amount: tokenAmount1 });
+    const ata0 = await setupAta(mint0, { owner: positionOwner, amount: BigInt(tokenAmount0.toString()) });
+    const ata1 = await setupAta2022(mint1, { owner: positionOwner, amount: BigInt(tokenAmount1.toString()) });
 
 
     const { tx, whirlpoolAddress, positionMintAddress, tokenMintA, tokenMintB } =
@@ -88,7 +88,14 @@ describe("Launchpad CPI", () => {
       tokenProgramB = TOKEN_2022_PROGRAM_ID;
     }
 
-    const price = new Decimal((tokenAmountB * 10 ** decimalsA) / (tokenAmountA * 10 ** decimalsB));
+    const price = new Decimal(
+      tokenAmountB.toString()
+    )
+      .mul(new Decimal(10).pow(decimalsA))
+      .div(
+        new Decimal(tokenAmountA.toString())
+          .mul(new Decimal(10).pow(decimalsB))
+      );
     const sqrtPrice = PriceMath.priceToSqrtPriceX64(price, decimalsA, decimalsB);
 
     const fetcher = buildDefaultAccountFetcher(connection);
@@ -116,17 +123,17 @@ describe("Launchpad CPI", () => {
     // Allow for small differences due to rounding
     const maxDiffPercentage = 0.005;
 
-    const tokenVaultADiff = balanceTokenVaultA > BigInt(tokenAmountA)
-      ? balanceTokenVaultA - BigInt(tokenAmountA)
-      : BigInt(tokenAmountA) - balanceTokenVaultA;
-    const tokenVaultBDiff = balanceTokenVaultB > BigInt(tokenAmountB)
-      ? balanceTokenVaultB - BigInt(tokenAmountB)
-      : BigInt(tokenAmountB) - balanceTokenVaultB;
+    const tokenVaultADiff = balanceTokenVaultA > BigInt(tokenAmountA.toString())
+      ? balanceTokenVaultA - BigInt(tokenAmountA.toString())
+      : BigInt(tokenAmountA.toString()) - balanceTokenVaultA;
+    const tokenVaultBDiff = balanceTokenVaultB > BigInt(tokenAmountB.toString())
+      ? balanceTokenVaultB - BigInt(tokenAmountB.toString())
+      : BigInt(tokenAmountB.toString()) - balanceTokenVaultB;
 
-    const tokenVaultADiffPercentage = Number(tokenVaultADiff) / Number(tokenAmountA);
-    const tokenVaultBDiffPercentage = Number(tokenVaultBDiff) / Number(tokenAmountB);
+    const tokenVaultADiffPercentage = Number(tokenVaultADiff) / Number(tokenAmountA.toString());
+    const tokenVaultBDiffPercentage = Number(tokenVaultBDiff) / Number(tokenAmountB.toString());
 
-    assert.strictEqual(BigInt(whirlpool.sqrtPrice), BigInt(sqrtPrice));
+    assert.strictEqual(BigInt(whirlpool.sqrtPrice.toString()), BigInt(sqrtPrice.toString()));
     assert(tokenVaultADiffPercentage <= maxDiffPercentage);
     assert(tokenVaultBDiffPercentage <= maxDiffPercentage);
     assert.strictEqual(balanceAtaA, tokenVaultADiff);
