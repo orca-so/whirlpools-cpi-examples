@@ -1,0 +1,15 @@
+[toolchain]
+
+[features]
+seeds = false
+skip-lint = false
+
+[programs.localnet]
+whirlpool_cpi = "Hg8WBEGv5aoT9xhcov3n99m4o5fUYPjmjNyo9F1xwYPv"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"

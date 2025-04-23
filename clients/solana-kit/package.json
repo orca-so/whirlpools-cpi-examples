@@ -1,0 +1,33 @@
+{
+    "type": "module",
+    "scripts": {
+        "test": "vitest run tests",
+        "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
+        "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+    },
+    "dependencies": {
+        "@codama/nodes-from-anchor": "^1.1.10",
+        "@codama/renderers-js": "^1.2.9",
+        "@coral-xyz/anchor": "^0.29.0",
+        "@orca-so/whirlpools": "^1.0.3",
+        "@orca-so/whirlpools-client": "^1.0.3",
+        "@orca-so/whirlpools-core": "^1.0.3",
+        "@solana-program/memo": "^0.7.0",
+        "@solana-program/system": "^0.7.0",
+        "@solana-program/token": "^0.5.1",
+        "@solana-program/token-2022": "^0.4.0",
+        "@solana/kit": "^2.1.0",
+        "@solana/sysvars": "^2.1.0",
+        "assert": "^2.1.0",
+        "codama": "^1.2.10",
+        "decimal.js": "^10.5.0"
+    },
+    "devDependencies": {
+        "@types/bn.js": "^5.1.0",
+        "prettier": "^2.6.2",
+        "solana-bankrun": "^0.4.0",
+        "tsx": "^4.19.3",
+        "typescript": "^5.0.0",
+        "vitest": "^3.0.9"
+    }
+}

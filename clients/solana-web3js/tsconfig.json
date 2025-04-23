@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "typeRoots": ["./node_modules/@types"],
+    "lib": ["ESNext"],
+    "module": "commonjs",
+    "target": "ESNext",
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+  }
+}
