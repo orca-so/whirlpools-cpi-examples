@@ -56,7 +56,7 @@ echo -e "${BLUE}==== Anchor Version Selection ====${NC}"
 echo -e "${CYAN}Please select an Anchor version:${NC}"
 echo -e "${GREEN}1) v0.29.0${NC}"
 echo -e "${GREEN}2) v0.30.1${NC}"
-echo -e "${GREEN}3) v0.31.0${NC}"
+echo -e "${GREEN}3) v0.31.1${NC}"
 read -p "$(echo -e ${YELLOW}Enter your choice \(1-3\): ${NC})" choice
 
 case $choice in
@@ -79,13 +79,13 @@ case $choice in
     PACKAGE_JSON_SOURCE="package.anchor-v0_30_1.json"
     ;;
   3)
-    ANCHOR_VERSION="v0.31.0"
-    CARGO_SOURCE="Cargo.anchor-v0_31_0.toml"
+    ANCHOR_VERSION="v0.31.1"
+    CARGO_SOURCE="Cargo.anchor-v0_31_1.toml"
     NEEDS_PATCH=false
     SOLANA_CLI_VERSION="v2.1.0"
     SOLANA_INSTALL_CMD="sh -c \"\$(curl -sSfL https://release.anza.xyz/v2.1.0/install)\""
-    AVM_VERSION="0.31.0"
-    PACKAGE_JSON_SOURCE="package.anchor-v0_31_0.json"
+    AVM_VERSION="0.31.1"
+    PACKAGE_JSON_SOURCE="package.anchor-v0_31_1.json"
     ;;
   *)
     echo -e "${RED}Invalid selection. Exiting.${NC}"

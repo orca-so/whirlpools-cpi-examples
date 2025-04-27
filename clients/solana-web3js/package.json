@@ -5,7 +5,7 @@
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
     },
     "dependencies": {
-        "@coral-xyz/anchor": "0.29.0",
+        "@coral-xyz/anchor": "0.31.1",
         "@orca-so/common-sdk": "^0.6.11",
         "@orca-so/whirlpools-sdk": "^0.13.18",
         "@solana/spl-token": "^0.4.13",
@@ -17,5 +17,9 @@
         "litesvm": "^0.2.0",
         "vitest": "^3.0.9",
         "@types/bn.js": "~5.1.6"
+    },
+    "resolutions": {
+        "@coral-xyz/anchor": "0.31.1",
+        "@orca-so/whirlpools-sdk/@coral-xyz/anchor": "0.29.0"
     }
 }

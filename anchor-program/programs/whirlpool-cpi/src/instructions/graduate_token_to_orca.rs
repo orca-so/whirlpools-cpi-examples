@@ -19,7 +19,9 @@ pub struct GraduateTokenToOrca<'info> {
     /// CHECK: Account is checked by the Whirlpool program
     #[account(mut)]
     pub whirlpool: UncheckedAccount<'info>,
+    /// CHECK: Account is checked by the Whirlpool program
     pub token_mint_a: UncheckedAccount<'info>,
+    /// CHECK: Account is checked by the Whirlpool program
     pub token_mint_b: UncheckedAccount<'info>,
     /// CHECK: Account is checked by the Whirlpool program
     #[account(mut)]
@@ -61,7 +63,9 @@ pub struct GraduateTokenToOrca<'info> {
     /// CHECK: Account is checked by the Whirlpool program
     #[account(mut)]
     pub token_owner_account_b: UncheckedAccount<'info>,
+    /// CHECK: Account is checked by the Whirlpool program
     pub token_program_a: UncheckedAccount<'info>,
+    /// CHECK: Account is checked by the Whirlpool program
     pub token_program_b: UncheckedAccount<'info>,
     /// CHECK: Account is checked by the Whirlpool program
     #[account(mut)]
