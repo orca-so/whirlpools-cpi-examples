@@ -18,8 +18,8 @@ idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
 [dependencies]
 bytemuck_derive = { version = "=1.8.1" }
-solana-program = { version = "=2.1.0" }                 # solana-cli version must be the same: sh -c "$(curl -sSfL https://release.anza.xyz/v2.1.0/install)"
-anchor-lang = { version = "=0.31" }
-anchor-spl = { version = "=0.31", features = ["memo"] }
+solana-program = { version = "=2.1.0" }                   # solana-cli version must be the same: sh -c "$(curl -sSfL https://release.anza.xyz/v2.1.0/install)"
+anchor-lang = { version = "=0.31.1" }
+anchor-spl = { version = "=0.31.1", features = ["memo"] }
 orca_whirlpools_client = { version = "^2.0.0" }
 orca_whirlpools_core = { version = "^1.0.0" }

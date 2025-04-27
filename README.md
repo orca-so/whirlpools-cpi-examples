@@ -7,7 +7,7 @@ A comprehensive toolkit for developers looking to integrate the Orca Whirlpools 
 - CPI (Cross-Program Invocation) examples for multiple Anchor versions:
   - v0.29.0
   - v0.30.1
-  - v0.31.0
+  - v0.31.1
 - Client-side code for generating instruction data and account information using both:
   - `@solana/web3.js`
   - `@solana/kit`
@@ -25,12 +25,12 @@ Each Anchor version requires a specific Solana CLI version:
 | -------------- | ------------------ |
 | v0.29.0        | v1.18.17           |
 | v0.30.1        | v1.18.17           |
-| v0.31.0        | v2.1.0             |
+| v0.31.1        | v2.1.0             |
 
 ### Rust Version Compatibility
 
 - **Anchor v0.29.0 and v0.30.1**: Tested with Rust versions 1.78 - 1.82. Programs will not build with newer Rust versions.
-- **Anchor v0.31.0**: Compatible with newer Rust versions.
+- **Anchor v0.31.1**: Compatible with newer Rust versions.
 
 ### Setting Up the Correct Environment
 
@@ -40,7 +40,7 @@ Each Anchor version requires a specific Solana CLI version:
 # For Anchor v0.29.0 and v0.30.1
 sh -c "$(curl -sSfL https://release.anza.xyz/v1.18.17/install)"
 
-# For Anchor v0.31.0
+# For Anchor v0.31.1
 sh -c "$(curl -sSfL https://release.anza.xyz/v2.1.0/install)"
 ```
 
@@ -51,7 +51,7 @@ sh -c "$(curl -sSfL https://release.anza.xyz/v2.1.0/install)"
 cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
 
 # Install and use the appropriate Anchor version
-avm use <version>  # Replace <version> with 0.29.0, 0.30.1, or 0.31.0
+avm use <version>  # Replace <version> with 0.29.0, 0.30.1, or 0.31.1
 ```
 
 ### ⚠️ Important: Solana Program Dependency Patching
@@ -69,7 +69,7 @@ For Anchor versions 0.29.0 and 0.30.1, you **must patch** the `solana-program` c
   cargo update solana-program@$LATEST_SOLANA_PROGRAM --precise 1.18.17
   ```
 
-For Anchor version 0.31.0, **no patching is required** as it's compatible with `solana-program` > v2.
+For Anchor version 0.31.1, **no patching is required** as it's compatible with `solana-program` > v2.
 
 ### Building the Program
 
